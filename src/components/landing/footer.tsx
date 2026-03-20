@@ -1,20 +1,25 @@
+import Link from "next/link"
 import { Twitter, Instagram, Linkedin } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 
-const quickLinks = [
-  { label: "Browse Spaces", href: "/search" },
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "List Your Cafe", href: "/cafe/onboard" },
+const productLinks = [
+  { label: "Search Spaces", href: "/search" },
+  { label: "List Your Cafe", href: "/for-cafes" },
+  { label: "For Companies", href: "/for-companies" },
   { label: "Pricing", href: "/pricing" },
+]
+
+const companyLinks = [
+  { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
+  { label: "Careers", href: "/careers" },
+  { label: "Contact", href: "/contact" },
 ]
 
 const legalLinks = [
+  { label: "Terms", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Service", href: "/terms" },
-  { label: "Cookie Policy", href: "/cookies" },
-  { label: "Refund Policy", href: "/refunds" },
-  { label: "Contact", href: "/contact" },
+  { label: "Cancellation Policy", href: "/cancellation" },
 ]
 
 const socialLinks = [
@@ -35,111 +40,103 @@ const socialLinks = [
   },
 ]
 
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <nav aria-label={title}>
+      <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-950 dark:text-white">
+        {title}
+      </h3>
+      <ul className="flex flex-col gap-3">{children}</ul>
+    </nav>
+  )
+}
+
+function FooterLink({ href, label }: { href: string; label: string }) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className={cn(
+          "rounded text-sm text-neutral-500 transition-colors hover:text-perch-primary-600",
+          "dark:text-neutral-400 dark:hover:text-perch-primary-400",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400"
+        )}
+      >
+        {label}
+      </Link>
+    </li>
+  )
+}
+
 export function Footer() {
   return (
     <footer
       className="border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
       role="contentinfo"
     >
-      <div className="mx-auto max-w-6xl px-4">
-        {/* Main footer grid */}
-        <div className="grid grid-cols-1 gap-12 py-16 sm:grid-cols-3 sm:gap-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Main grid — 4 columns */}
+        <div className="grid grid-cols-2 gap-8 py-16 sm:grid-cols-4 sm:gap-6">
           {/* Brand */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight text-neutral-950 dark:text-white">
-                Perch
-              </span>
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                Beta
-              </span>
-            </div>
+          <div className="col-span-2 flex flex-col gap-4 sm:col-span-1">
+            <Link
+              href="/"
+              className="text-xl font-bold tracking-tight text-neutral-950 dark:text-white font-display"
+            >
+              perch
+            </Link>
             <p className="max-w-xs text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
-              The smartest way to book cafe spaces for business meetings. Find your perch, get work done.
+              Book meeting-ready cafe spaces in 2 minutes. Find your perch, get work done.
             </p>
-            <p className="text-xs text-neutral-400 dark:text-neutral-600">
-              Made with care in India.
-            </p>
+            {/* Social */}
+            <div className="flex items-center gap-2.5">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-400 transition-colors",
+                    "hover:border-perch-primary-400 hover:text-perch-primary-500",
+                    "dark:border-neutral-800 dark:text-neutral-600 dark:hover:border-perch-primary-500 dark:hover:text-perch-primary-400",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400"
+                  )}
+                >
+                  {social.icon}
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Quick links */}
-          <nav aria-label="Quick links">
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-950 dark:text-white">
-              Quick Links
-            </h3>
-            <ul className="flex flex-col gap-3">
-              {quickLinks.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className={cn(
-                      "text-sm text-neutral-500 transition-colors hover:text-amber-600",
-                      "dark:text-neutral-400 dark:hover:text-amber-400"
-                    )}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          {/* Product */}
+          <FooterColumn title="Product">
+            {productLinks.map((link) => (
+              <FooterLink key={link.href} {...link} />
+            ))}
+          </FooterColumn>
 
-          {/* Legal links */}
-          <nav aria-label="Legal links">
-            <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-950 dark:text-white">
-              Legal
-            </h3>
-            <ul className="flex flex-col gap-3">
-              {legalLinks.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className={cn(
-                      "text-sm text-neutral-500 transition-colors hover:text-amber-600",
-                      "dark:text-neutral-400 dark:hover:text-amber-400"
-                    )}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          {/* Company */}
+          <FooterColumn title="Company">
+            {companyLinks.map((link) => (
+              <FooterLink key={link.href} {...link} />
+            ))}
+          </FooterColumn>
+
+          {/* Legal */}
+          <FooterColumn title="Legal">
+            {legalLinks.map((link) => (
+              <FooterLink key={link.href} {...link} />
+            ))}
+          </FooterColumn>
         </div>
 
         {/* Bottom bar */}
-        <div
-          className={cn(
-            "flex flex-col items-center justify-between gap-4 border-t border-neutral-200 py-8",
-            "dark:border-neutral-800",
-            "sm:flex-row"
-          )}
-        >
+        <div className="flex items-center justify-center border-t border-neutral-200 py-8 dark:border-neutral-800">
           <p className="text-xs text-neutral-400 dark:text-neutral-600">
-            &copy; {new Date().getFullYear()} Perch Technologies Pvt. Ltd. All rights reserved.
+            &copy; 2026 Perch. Made in Mumbai 🇮🇳
           </p>
-
-          {/* Social icons */}
-          <div className="flex items-center gap-3" role="list" aria-label="Social media links">
-            {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.label}
-                role="listitem"
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-400 transition-colors",
-                  "hover:border-amber-400 hover:text-amber-500",
-                  "dark:border-neutral-800 dark:text-neutral-600 dark:hover:border-amber-500 dark:hover:text-amber-400",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                )}
-              >
-                {social.icon}
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

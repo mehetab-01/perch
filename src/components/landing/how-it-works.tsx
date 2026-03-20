@@ -4,11 +4,11 @@ import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
 import {
   Search,
-  Zap,
+  MousePointerClick,
   MapPin,
   ListPlus,
-  BadgeCheck,
-  CalendarDays,
+  CalendarCheck,
+  IndianRupee,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 
@@ -23,23 +23,23 @@ const workerSteps: Step[] = [
   {
     number: "01",
     icon: <Search className="h-5 w-5" aria-hidden="true" />,
-    title: "Search & filter spaces",
+    title: "Search for a space",
     description:
-      "Browse cafe spaces by location, capacity, and amenities. Filter by WiFi, projectors, whiteboards and more.",
+      "Browse by location, date, capacity, and amenities. Filter for WiFi, projectors, whiteboards, and more.",
   },
   {
     number: "02",
-    icon: <Zap className="h-5 w-5" aria-hidden="true" />,
-    title: "Book in 2 minutes",
+    icon: <MousePointerClick className="h-5 w-5" aria-hidden="true" />,
+    title: "Book in 2 taps",
     description:
-      "Select your slot, pay securely via Razorpay, and get an instant confirmation — no waiting, no phone calls.",
+      "Pick your slot, pay securely via Razorpay. Instant confirmation — no calls, no waiting.",
   },
   {
     number: "03",
     icon: <MapPin className="h-5 w-5" aria-hidden="true" />,
-    title: "Show up & meet",
+    title: "Show up and meet",
     description:
-      "Arrive, present your booking QR, and get straight to business in a great-smelling, fully-equipped space.",
+      "Present your booking QR code, settle in, and get straight to business in a cafe you love.",
   },
 ]
 
@@ -47,45 +47,48 @@ const cafeSteps: Step[] = [
   {
     number: "01",
     icon: <ListPlus className="h-5 w-5" aria-hidden="true" />,
-    title: "List your space",
+    title: "List your space for free",
     description:
-      "Add photos, set your availability and hourly rate. Your first listing is completely free to publish.",
+      "Add photos, set availability and hourly rates. Your first listing is completely free to publish.",
   },
   {
     number: "02",
-    icon: <BadgeCheck className="h-5 w-5" aria-hidden="true" />,
-    title: "Get verified",
+    icon: <CalendarCheck className="h-5 w-5" aria-hidden="true" />,
+    title: "Get bookings automatically",
     description:
-      "Our team does a quick review to ensure quality and safety standards. Most listings go live within 24 hours.",
+      "Professionals discover and book your space. No marketing, no outreach — bookings come to you.",
   },
   {
     number: "03",
-    icon: <CalendarDays className="h-5 w-5" aria-hidden="true" />,
-    title: "Earn on your schedule",
+    icon: <IndianRupee className="h-5 w-5" aria-hidden="true" />,
+    title: "Earn \u20B915,000\u201350,000/month",
     description:
-      "Bookings land in your dashboard. Payments settle automatically after each session — no chasing invoices.",
+      "Payments settle automatically after each session. Turn off-peak empty tables into steady revenue.",
   },
 ]
 
-interface StepCardProps {
-  step: Step
-  index: number
-  accent: string
-}
+function StepCard({ step, index, accent }: { step: Step; index: number; accent: "amber" | "green" }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true, margin: "-60px 0px" })
 
-function StepCard({ step, index, accent }: StepCardProps) {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, delay: index * 0.12 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.5, delay: index * 0.12 }}
       className={cn(
         "relative flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6",
         "dark:border-neutral-800 dark:bg-neutral-900"
       )}
     >
       {/* Step number */}
-      <span className={cn("text-xs font-bold tracking-widest", accent)}>
+      <span
+        className={cn(
+          "text-xs font-bold tracking-widest",
+          accent === "amber" ? "text-perch-primary-500" : "text-perch-secondary-500"
+        )}
+      >
         {step.number}
       </span>
 
@@ -93,9 +96,9 @@ function StepCard({ step, index, accent }: StepCardProps) {
       <div
         className={cn(
           "flex h-10 w-10 items-center justify-center rounded-xl",
-          accent === "text-amber-500"
-            ? "bg-amber-500/10 text-amber-500"
-            : "bg-orange-500/10 text-orange-500"
+          accent === "amber"
+            ? "bg-perch-primary-500/10 text-perch-primary-500"
+            : "bg-perch-secondary-500/10 text-perch-secondary-500"
         )}
         aria-hidden="true"
       >
@@ -115,62 +118,13 @@ function StepCard({ step, index, accent }: StepCardProps) {
   )
 }
 
-interface ColumnProps {
-  label: string
-  badge: string
-  badgeBg: string
-  steps: Step[]
-  accent: string
-}
-
-function Column({ label, badge, badgeBg, steps, accent }: ColumnProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: "-80px 0px" })
-
-  return (
-    <div ref={ref} className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            "rounded-full px-3 py-1 text-xs font-semibold",
-            badgeBg
-          )}
-        >
-          {badge}
-        </span>
-        <h3 className="text-xl font-bold tracking-tight text-neutral-950 dark:text-white">
-          {label}
-        </h3>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {inView &&
-          steps.map((step, i) => (
-            <StepCard key={step.number} step={step} index={i} accent={accent} />
-          ))}
-        {!inView &&
-          steps.map((step) => (
-            <div
-              key={step.number}
-              className={cn(
-                "h-[168px] rounded-2xl border border-neutral-200 bg-white opacity-0",
-                "dark:border-neutral-800 dark:bg-neutral-900"
-              )}
-              aria-hidden="true"
-            />
-          ))}
-      </div>
-    </div>
-  )
-}
-
 export function HowItWorks() {
   return (
     <section className="bg-neutral-50 py-24 dark:bg-neutral-950 sm:py-32">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="mb-16 flex flex-col items-center gap-3 text-center">
-          <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+          <span className="text-xs font-semibold uppercase tracking-widest text-perch-primary-500">
             How it works
           </span>
           <h2 className="text-3xl font-bold tracking-tight text-neutral-950 dark:text-white sm:text-4xl">
@@ -183,20 +137,39 @@ export function HowItWorks() {
 
         {/* Two-column grid */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-8">
-          <Column
-            label="For Professionals"
-            badge="Professionals"
-            badgeBg="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-            steps={workerSteps}
-            accent="text-amber-500"
-          />
-          <Column
-            label="For Cafe Owners"
-            badge="Cafe Owners"
-            badgeBg="bg-orange-500/10 text-orange-600 dark:text-orange-400"
-            steps={cafeSteps}
-            accent="text-orange-500"
-          />
+          {/* For Professionals */}
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-perch-primary-500/10 px-3 py-1 text-xs font-semibold text-perch-primary-600 dark:text-perch-primary-400">
+                Professionals
+              </span>
+              <h3 className="text-xl font-bold tracking-tight text-neutral-950 dark:text-white">
+                For Professionals
+              </h3>
+            </div>
+            <div className="flex flex-col gap-4">
+              {workerSteps.map((step, i) => (
+                <StepCard key={step.number} step={step} index={i} accent="amber" />
+              ))}
+            </div>
+          </div>
+
+          {/* For Cafe Owners */}
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-perch-secondary-500/10 px-3 py-1 text-xs font-semibold text-perch-secondary-600 dark:text-perch-secondary-400">
+                Cafe Owners
+              </span>
+              <h3 className="text-xl font-bold tracking-tight text-neutral-950 dark:text-white">
+                For Cafe Owners
+              </h3>
+            </div>
+            <div className="flex flex-col gap-4">
+              {cafeSteps.map((step, i) => (
+                <StepCard key={step.number} step={step} index={i} accent="green" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
