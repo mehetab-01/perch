@@ -75,3 +75,11 @@ Airbnb-style marketplace where cafes list their spaces and professionals book th
 - All meeting content (title, agenda) must be encrypted at rest
 - Phone numbers never exposed cross-role (worker can't see cafe owner's phone)
 - DPDP Act compliance: explicit consent, data minimization, 72hr breach notification
+
+## Testing (TestSprite)
+- TestSprite MCP is configured for automated AI testing
+- Use TestSprite for: generating test plans, writing test code, running tests, debugging failures
+- To test a feature: ask "test the booking flow with TestSprite" or "run TestSprite tests on /src/app/api/bookings"
+- TestSprite generates and executes tests in cloud — no local test runner needed initially
+- Test results appear in both Claude Code AND the TestSprite dashboard at testsprite.com
+- For code review: ask "@code-reviewer review this, then run TestSprite to validate"

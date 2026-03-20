@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "perch",
+    "projectPath": "C:/Users/almeh/OneDrive/Desktop/Perch/perch",
+    "testIds": [],
+    "additionalInstruction": "Focus on: (1) Landing page loads with Hero, HowItWorks, and FeaturedSpaces sections. (2) Sign-in and sign-up pages render correctly via Clerk. (3) Unauthenticated access to /worker/* and /cafe/* redirects to sign-in. Test what is implemented — landing page UI and auth route protection.",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-CVXWMkl9ACo49-Pvhby-7Zy043olWRVxp8Ec-DGWx2bNBZDmG9APk3jdUA1-I53jHiWYLxDEqfSrjR-PdvskFogV6fepOXPcw6BvaetPDUiK56_oxBlPvg2d_p5qfUp-toM"
+    }
+  },
+  "serverPort": 51849,
+  "proxy": "http://a734bee7-5b56-4fb4-8166-1dc7439c59b7:W9yJqxPzcgLvcEFJersW0dD6CE6YL4oh@tun.testsprite.com:8080"
+}

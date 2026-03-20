@@ -1,0 +1,117 @@
+project_name: perch
+description: Airbnb-style marketplace where cafes list their spaces and professionals book them for business meetings. Full payment flow via Razorpay with escrow-like settlements.
+
+tech_stack:
+  framework: Next.js 16.2.0 (App Router, React Server Components, TypeScript)
+  runtime: Node.js 20+ / Vercel Edge
+  language: TypeScript 5 (strict mode)
+  auth: Clerk v7.0.6 (Google OAuth, Email/Password, OTP) + Svix webhooks
+  database: Neon PostgreSQL (serverless) + Drizzle ORM v0.45.1 + PostGIS
+  payments: Razorpay v2.9.6 (Standard Checkout + Route for split payments)
+  file_upload: Uploadthing (documents) + Cloudinary (images)
+  email: Resend + React Email
+  styling: Tailwind CSS v4 + Framer Motion + Radix UI + shadcn/ui + Aceternity UI
+  analytics: PostHog
+  hosting: Vercel
+  package_manager: pnpm
+
+features:
+  public:
+    - name: Landing Page
+      route: /
+      description: Animated hero, trust bar, how it works, featured spaces carousel, cafe CTA, footer
+      status: implemented
+
+  auth:
+    - name: Sign In
+      route: /sign-in
+      description: Clerk-hosted sign-in with Google OAuth, email/password, OTP
+      status: implemented
+    - name: Sign Up
+      route: /sign-up
+      description: Clerk-hosted sign-up
+      status: implemented
+    - name: Clerk Webhook
+      route: /api/webhooks/clerk
+      description: Syncs new Clerk users to users table on signup
+      status: implemented
+
+  worker:
+    - name: Worker Dashboard
+      route: /worker/dashboard
+      description: Worker home with bookings and statistics
+      status: scaffolded
+    - name: Space Search
+      route: /worker/search
+      description: Search and filter spaces by location, date, capacity, amenities, noise, price
+      status: scaffolded
+    - name: Bookings
+      route: /worker/bookings
+      description: Booking list, status tracking, invitations, review submission
+      status: scaffolded
+
+  cafe:
+    - name: Space Management
+      route: /cafe-dashboard/spaces
+      description: Create, edit, manage spaces with photos and amenities
+      status: scaffolded
+    - name: Earnings
+      route: /cafe-dashboard/earnings
+      description: Revenue tracking, payout status
+      status: scaffolded
+    - name: Reviews
+      route: /cafe-dashboard/reviews
+      description: View and respond to worker reviews
+      status: scaffolded
+
+  api:
+    - route: /api/cafes
+      methods: [GET, POST]
+      status: scaffolded
+    - route: /api/spaces
+      methods: [GET, POST]
+      status: scaffolded
+    - route: /api/bookings
+      methods: [GET, POST]
+      status: scaffolded
+    - route: /api/reviews
+      methods: [GET, POST]
+      status: scaffolded
+    - route: /api/search
+      methods: [GET]
+      status: scaffolded
+    - route: /api/uploadthing
+      methods: [POST]
+      status: scaffolded
+    - route: /api/webhooks/razorpay
+      methods: [POST]
+      status: scaffolded
+
+database:
+  tables:
+    - users
+    - cafes
+    - spaces
+    - availability
+    - bookings
+    - booking_invites
+    - reviews
+    - payments
+    - notifications
+  enums:
+    - user_role: [worker, cafe_owner, admin]
+    - verification_status: [pending, under_review, verified, rejected]
+    - noise_level: [silent, quiet, moderate, lively]
+    - booking_status: [pending, confirmed, checked_in, completed, cancelled, no_show]
+    - invite_status: [pending, accepted, declined]
+    - payment_status: [pending, captured, failed, refunded]
+    - payout_status: [pending, processing, settled, failed]
+
+key_files:
+  schema: src/lib/db/schema.ts
+  db_client: src/lib/db/index.ts
+  middleware: src/proxy.ts
+  clerk_webhook: src/app/api/webhooks/clerk/route.ts
+  landing_page: src/app/(public)/page.tsx
+  root_layout: src/app/layout.tsx
+  types: src/types/index.ts

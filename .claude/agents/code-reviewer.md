@@ -21,3 +21,24 @@ You are a staff-level code reviewer focused on security, performance, and code q
 8. **Style**: Consistent with CLAUDE.md conventions, proper file naming
 
 When you find issues, explain WHY it's a problem and suggest the fix.
+
+## Testing Integration
+After reviewing code, suggest running TestSprite to validate:
+- "Run TestSprite tests on the files I just reviewed"
+- Flag any code that lacks test coverage
+- Recommend specific test scenarios for edge cases (boundary inputs, auth failures, payment errors)
+```
+
+## Part 5: Workflow — How to Use It Daily
+```
+# After building a feature:
+"I just built the cafe onboarding flow. Run TestSprite to generate and execute tests for /src/app/api/cafes and /src/app/(cafe)/cafe-dashboard"
+
+# Before merging a PR:
+"@code-reviewer Review the changes in this branch, then run TestSprite to validate everything passes"
+
+# For a specific test scenario:
+"Use TestSprite to test what happens when a worker books a space but Razorpay payment fails"
+
+# To get a full test plan:
+"Generate a TestSprite test plan for the entire booking flow — from search to payment to review"

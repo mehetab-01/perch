@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\(auth\\)/sign-in/[[...sign-in]]\" && mkdir -p \"/c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\(auth\\)/sign-up/[[...sign-up]]\" && mkdir -p \"/c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/api/webhooks/clerk\")",
+      "Bash(ls /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/lib/utils/ && ls /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\\\\\(public\\\\\\)/)",
+      "Bash(ls /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\\\\\(public\\\\\\)/ 2>/dev/null && cat /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\\\\\(public\\\\\\)/page.tsx 2>/dev/null || echo \"No public page yet\")",
+      "Bash(mkdir -p /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/components/landing && mkdir -p /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\\\\\(public\\\\\\))",
+      "Bash(ls /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/components/landing/ && ls /c/Users/almeh/OneDrive/Desktop/Perch/perch/src/app/\\\\\\(public\\\\\\)/)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d.keys\\(\\)]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d[''''plugins''''].keys\\(\\)]\")",
+      "WebSearch",
+      "Skill(update-config)",
+      "mcp__TestSprite__testsprite_check_account_info",
+      "mcp__TestSprite__testsprite_generate_code_summary",
+      "mcp__TestSprite__testsprite_generate_standardized_prd",
+      "mcp__TestSprite__testsprite_generate_backend_test_plan",
+      "mcp__TestSprite__testsprite_generate_frontend_test_plan",
+      "mcp__TestSprite__testsprite_generate_code_and_execute",
+      "mcp__TestSprite__testsprite_bootstrap"
+    ]
+  }
+}
