@@ -3,13 +3,12 @@ import {
   pgEnum,
   text,
   integer,
-  decimal,
   boolean,
   timestamp,
   date,
-  time,
   jsonb,
-  doublePrecision,
+  real,
+  uuid,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
@@ -21,33 +20,24 @@ export const userRoleEnum = pgEnum("user_role", [
   "admin",
 ])
 
-export const verificationStatusEnum = pgEnum("verification_status", [
-  "pending",
-  "under_review",
-  "verified",
-  "rejected",
-])
-
-export const noiseLevelEnum = pgEnum("noise_level", [
-  "silent",
-  "quiet",
-  "moderate",
-  "lively",
-])
-
 export const bookingStatusEnum = pgEnum("booking_status", [
   "pending",
   "confirmed",
   "checked_in",
   "completed",
   "cancelled",
-  "no_show",
 ])
 
-export const inviteStatusEnum = pgEnum("invite_status", [
+export const noiseLevelEnum = pgEnum("noise_level", [
+  "quiet",
+  "moderate",
+  "lively",
+])
+
+export const verificationStatusEnum = pgEnum("verification_status", [
   "pending",
-  "accepted",
-  "declined",
+  "verified",
+  "rejected",
 ])
 
 export const paymentStatusEnum = pgEnum("payment_status", [
@@ -59,7 +49,6 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 
 export const payoutStatusEnum = pgEnum("payout_status", [
   "pending",
-  "processing",
   "settled",
   "failed",
 ])
@@ -77,46 +66,50 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 })
 
 export const cafes = pgTable("cafes", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+  id: uuid("id").primaryKey().defaultRandom(),
   ownerId: text("owner_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
   address: text("address").notNull(),
-  lat: doublePrecision("lat"),
-  lng: doublePrecision("lng"),
+  city: text("city").notNull().default("Mumbai"),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
   gstNumber: text("gst_number"),
   fssaiLicenseUrl: text("fssai_license_url"),
   verificationStatus: verificationStatusEnum("verification_status")
     .notNull()
     .default("pending"),
-  avgRating: decimal("avg_rating", { precision: 3, scale: 2 }).default("0.00"),
+  avgRating: real("avg_rating").notNull().default(0),
+  totalReviews: integer("total_reviews").notNull().default(0),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 })
 
 export const spaces = pgTable("spaces", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  cafeId: text("cafe_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  cafeId: uuid("cafe_id")
     .notNull()
     .references(() => cafes.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   capacityMin: integer("capacity_min").notNull().default(1),
   capacityMax: integer("capacity_max").notNull(),
-  pricePerHour: decimal("price_per_hour", { precision: 10, scale: 2 }).notNull(),
-  amenities: jsonb("amenities").$type<string[]>().default([]),
+  pricePerHour: integer("price_per_hour").notNull(), // stored in paise
+  amenities: jsonb("amenities").$type<string[]>().notNull().default([]),
   noiseLevel: noiseLevelEnum("noise_level").notNull().default("moderate"),
   photos: text("photos").array().notNull().default([]),
   isActive: boolean("is_active").notNull().default(true),
@@ -126,105 +119,109 @@ export const spaces = pgTable("spaces", {
 })
 
 export const availability = pgTable("availability", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  spaceId: text("space_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  spaceId: uuid("space_id")
     .notNull()
     .references(() => spaces.id, { onDelete: "cascade" }),
   dayOfWeek: integer("day_of_week"), // 0 = Sunday … 6 = Saturday; null when blockedDate is set
-  startTime: time("start_time"),
-  endTime: time("end_time"),
+  startTime: text("start_time").notNull(), // format "09:00"
+  endTime: text("end_time").notNull(), // format "17:00"
   isRecurring: boolean("is_recurring").notNull().default(true),
   blockedDate: date("blocked_date"), // non-null = one-off block
 })
 
 export const bookings = pgTable("bookings", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+  id: uuid("id").primaryKey().defaultRandom(),
   workerId: text("worker_id")
     .notNull()
     .references(() => users.id),
-  spaceId: text("space_id")
+  spaceId: uuid("space_id")
     .notNull()
     .references(() => spaces.id),
-  cafeId: text("cafe_id")
+  cafeId: uuid("cafe_id")
     .notNull()
     .references(() => cafes.id),
   date: date("date").notNull(),
-  startTime: time("start_time").notNull(),
-  endTime: time("end_time").notNull(),
-  durationHours: decimal("duration_hours", { precision: 4, scale: 2 }).notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  durationHours: real("duration_hours").notNull(),
   numAttendees: integer("num_attendees").notNull().default(1),
   meetingTitle: text("meeting_title"), // encrypted at rest in app layer
-  agenda: text("agenda"),             // encrypted at rest in app layer
+  agenda: text("agenda"), // encrypted at rest in app layer
   status: bookingStatusEnum("status").notNull().default("pending"),
   checkinToken: text("checkin_token").unique(),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(),
-  cafePayout: decimal("cafe_payout", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: integer("total_amount").notNull(), // paise
+  platformFee: integer("platform_fee").notNull(), // paise
+  cafePayout: integer("cafe_payout").notNull(), // paise
+  razorpayOrderId: text("razorpay_order_id"),
   razorpayPaymentId: text("razorpay_payment_id"),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancelReason: text("cancel_reason"),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 })
 
 export const bookingInvites = pgTable("booking_invites", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  bookingId: text("booking_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookingId: uuid("booking_id")
     .notNull()
     .references(() => bookings.id, { onDelete: "cascade" }),
   inviteeEmail: text("invitee_email").notNull(),
-  status: inviteStatusEnum("status").notNull().default("pending"),
+  inviteeName: text("invitee_name"),
+  status: text("status").notNull().default("pending"), // pending/accepted/declined
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 })
 
 export const reviews = pgTable("reviews", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  bookingId: text("booking_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookingId: uuid("booking_id")
     .notNull()
     .unique()
     .references(() => bookings.id),
   workerId: text("worker_id")
     .notNull()
     .references(() => users.id),
-  cafeId: text("cafe_id")
+  cafeId: uuid("cafe_id")
     .notNull()
     .references(() => cafes.id),
-  overallRating: integer("overall_rating").notNull(),  // 1-5
+  overallRating: integer("overall_rating").notNull(), // 1-5
   wifiRating: integer("wifi_rating"),
   noiseRating: integer("noise_rating"),
   spaceRating: integer("space_rating"),
   staffRating: integer("staff_rating"),
-  text: text("text"),
+  comment: text("comment"),
   cafeResponse: text("cafe_response"),
+  isVisible: boolean("is_visible").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 })
 
 export const payments = pgTable("payments", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  bookingId: text("booking_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookingId: uuid("booking_id")
     .notNull()
     .unique()
     .references(() => bookings.id),
-  razorpayTxnId: text("razorpay_txn_id").notNull().unique(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(),
-  cafeAmount: decimal("cafe_amount", { precision: 10, scale: 2 }).notNull(),
-  gst: decimal("gst", { precision: 10, scale: 2 }).notNull().default("0.00"),
-  paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
-  payoutStatus: payoutStatusEnum("payout_status").notNull().default("pending"),
+  razorpayOrderId: text("razorpay_order_id").notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  razorpaySignature: text("razorpay_signature"),
+  amount: integer("amount").notNull(), // paise
+  platformFee: integer("platform_fee").notNull(), // paise
+  cafeAmount: integer("cafe_amount").notNull(), // paise
+  gstAmount: integer("gst_amount").notNull(), // paise
+  paymentStatus: paymentStatusEnum("payment_status")
+    .notNull()
+    .default("pending"),
+  payoutStatus: payoutStatusEnum("payout_status")
+    .notNull()
+    .default("pending"),
   settledAt: timestamp("settled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -232,14 +229,14 @@ export const payments = pgTable("payments", {
 })
 
 export const notifications = pgTable("notifications", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
+    .references(() => users.id),
+  type: text("type").notNull(), // booking_confirmed, booking_cancelled, review_received, payout_settled, reminder
+  title: text("title").notNull(),
   content: text("content").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, string>>(),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -269,7 +266,10 @@ export const spacesRelations = relations(spaces, ({ one, many }) => ({
 }))
 
 export const availabilityRelations = relations(availability, ({ one }) => ({
-  space: one(spaces, { fields: [availability.spaceId], references: [spaces.id] }),
+  space: one(spaces, {
+    fields: [availability.spaceId],
+    references: [spaces.id],
+  }),
 }))
 
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
@@ -281,25 +281,37 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   payment: one(payments),
 }))
 
-export const bookingInvitesRelations = relations(bookingInvites, ({ one }) => ({
-  booking: one(bookings, {
-    fields: [bookingInvites.bookingId],
-    references: [bookings.id],
-  }),
-}))
+export const bookingInvitesRelations = relations(
+  bookingInvites,
+  ({ one }) => ({
+    booking: one(bookings, {
+      fields: [bookingInvites.bookingId],
+      references: [bookings.id],
+    }),
+  })
+)
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
-  booking: one(bookings, { fields: [reviews.bookingId], references: [bookings.id] }),
+  booking: one(bookings, {
+    fields: [reviews.bookingId],
+    references: [bookings.id],
+  }),
   worker: one(users, { fields: [reviews.workerId], references: [users.id] }),
   cafe: one(cafes, { fields: [reviews.cafeId], references: [cafes.id] }),
 }))
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
-  booking: one(bookings, { fields: [payments.bookingId], references: [bookings.id] }),
+  booking: one(bookings, {
+    fields: [payments.bookingId],
+    references: [bookings.id],
+  }),
 }))
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
 }))
 
 // ─── Inferred types ───────────────────────────────────────────────────────────
