@@ -1,13 +1,43 @@
-import { SignUp } from "@clerk/nextjs"
+"use client"
 
-export const metadata = {
-  title: "Sign Up — Perch",
-}
+import { SignUp } from "@clerk/nextjs"
+import { motion } from "framer-motion"
 
 export default function SignUpPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-      <SignUp />
+    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-neutral-950">
+      {/* Animated gradient background */}
+      <motion.div
+        className="absolute inset-0 opacity-30"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 50%, #6366f1, #0ea5e9, #10b981)",
+          backgroundSize: "200% 200%",
+        }}
+        animate={{
+          backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
+        }}
+        transition={{
+          duration: 12,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center gap-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            Perch
+          </h1>
+          <p className="mt-1 text-sm text-neutral-400">
+            Create your account
+          </p>
+        </div>
+
+        <SignUp
+          fallbackRedirectUrl="/dashboard"
+        />
+      </div>
     </main>
   )
 }

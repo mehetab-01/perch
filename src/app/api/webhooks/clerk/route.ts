@@ -1,87 +1,91 @@
-import { headers } from "next/headers"
-import { NextResponse } from "next/server"
-import { Webhook } from "svix"
+import { type NextRequest, NextResponse } from "next/server"
+import { verifyWebhook } from "@clerk/nextjs/webhooks"
+import type { WebhookEvent } from "@clerk/nextjs/server"
+import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 
-type ClerkEmailAddress = {
-  email_address: string
-  id: string
+function getPrimaryEmail(data: {
+  email_addresses: { email_address: string; id: string }[]
+  primary_email_address_id: string | null
+}): string | null {
+  if (!data.primary_email_address_id) return null
+  const primary = data.email_addresses.find(
+    (e) => e.id === data.primary_email_address_id
+  )
+  return primary?.email_address ?? null
 }
 
-type ClerkUserCreatedEvent = {
-  type: "user.created"
-  data: {
-    id: string
-    email_addresses: ClerkEmailAddress[]
-    primary_email_address_id: string
-    first_name: string | null
-    last_name: string | null
-    image_url: string
-    phone_numbers: { phone_number: string }[]
-  }
+function buildName(firstName: string | null, lastName: string | null, fallback: string): string {
+  return [firstName, lastName].filter(Boolean).join(" ") || fallback
 }
 
-type ClerkEvent = ClerkUserCreatedEvent
-
-export async function POST(req: Request) {
-  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET
-
-  if (!webhookSecret) {
-    return NextResponse.json(
-      { error: "CLERK_WEBHOOK_SECRET not configured" },
-      { status: 500 }
-    )
-  }
-
-  // Verify signature
-  const headerPayload = await headers()
-  const svixId = headerPayload.get("svix-id")
-  const svixTimestamp = headerPayload.get("svix-timestamp")
-  const svixSignature = headerPayload.get("svix-signature")
-
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json({ error: "Missing svix headers" }, { status: 400 })
-  }
-
-  const body = await req.text()
-
-  let event: ClerkEvent
+export async function POST(req: NextRequest) {
+  let event: WebhookEvent
   try {
-    const wh = new Webhook(webhookSecret)
-    event = wh.verify(body, {
-      "svix-id": svixId,
-      "svix-timestamp": svixTimestamp,
-      "svix-signature": svixSignature,
-    }) as ClerkEvent
+    event = await verifyWebhook(req)
   } catch {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 })
   }
 
-  if (event.type !== "user.created") {
-    return NextResponse.json({ received: true })
+  try {
+    switch (event.type) {
+      case "user.created": {
+        const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url, phone_numbers } =
+          event.data
+
+        const email = getPrimaryEmail({ email_addresses, primary_email_address_id })
+        if (!email) {
+          return NextResponse.json({ error: "No primary email found" }, { status: 400 })
+        }
+
+        await db.insert(users).values({
+          id,
+          email,
+          name: buildName(first_name, last_name, email),
+          avatarUrl: image_url || null,
+          phone: phone_numbers?.[0]?.phone_number ?? null,
+        })
+
+        return NextResponse.json({ success: true }, { status: 201 })
+      }
+
+      case "user.updated": {
+        const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url } =
+          event.data
+
+        const email = getPrimaryEmail({ email_addresses, primary_email_address_id })
+        if (!email) {
+          return NextResponse.json({ error: "No primary email found" }, { status: 400 })
+        }
+
+        await db
+          .update(users)
+          .set({
+            email,
+            name: buildName(first_name, last_name, email),
+            avatarUrl: image_url || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, id))
+
+        return NextResponse.json({ success: true })
+      }
+
+      case "user.deleted": {
+        const { id } = event.data
+        if (id) {
+          await db.delete(users).where(eq(users.id, id))
+        }
+
+        return NextResponse.json({ success: true })
+      }
+
+      default:
+        return NextResponse.json({ received: true })
+    }
+  } catch (error) {
+    console.error("Clerk webhook DB error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-
-  const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url, phone_numbers } =
-    event.data
-
-  const primaryEmail = email_addresses.find(
-    (e) => e.id === primary_email_address_id
-  )
-
-  if (!primaryEmail) {
-    return NextResponse.json({ error: "No primary email found" }, { status: 400 })
-  }
-
-  const name = [first_name, last_name].filter(Boolean).join(" ") || primaryEmail.email_address
-
-  await db.insert(users).values({
-    id,
-    email: primaryEmail.email_address,
-    name,
-    avatarUrl: image_url || null,
-    phone: phone_numbers[0]?.phone_number ?? null,
-  })
-
-  return NextResponse.json({ success: true }, { status: 201 })
 }
