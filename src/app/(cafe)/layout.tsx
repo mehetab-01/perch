@@ -1,5 +1,7 @@
+import { PageTransition } from "@/components/layout/page-transition"
+
 function CafeLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return <PageTransition>{children}</PageTransition>
 }
 
-export default CafeLayout
+export { CafeLayout as default }

@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
+import { NotificationBell } from "@/components/layout/notification-bell"
 
 const sidebarLinks = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -93,6 +94,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             )?.label ?? "Dashboard"}
           </h1>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="lg:hidden">
               <UserButton
                 appearance={{

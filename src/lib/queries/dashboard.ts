@@ -98,6 +98,47 @@ export async function getBookingById(
   return result[0] ?? null
 }
 
+/** Check whether a review already exists for a specific booking */
+export async function hasReviewForBooking(bookingId: string): Promise<boolean> {
+  const result = await db
+    .select({ id: reviews.id })
+    .from(reviews)
+    .where(eq(reviews.bookingId, bookingId))
+    .limit(1)
+
+  return result.length > 0
+}
+
+/** Get completed bookings that have NOT been reviewed yet (for dashboard banner) */
+export async function getReviewableBookings(
+  userId: string,
+  limit = 1
+): Promise<BookingWithDetails[]> {
+  const result = await db
+    .select(bookingWithDetailsSelect)
+    .from(bookings)
+    .innerJoin(cafes, eq(bookings.cafeId, cafes.id))
+    .innerJoin(spaces, eq(bookings.spaceId, spaces.id))
+    .where(
+      and(
+        eq(bookings.workerId, userId),
+        eq(bookings.status, "completed")
+      )
+    )
+    .orderBy(desc(bookings.date))
+    .limit(limit * 3) // fetch more, then filter
+
+  // Filter out bookings that already have a review
+  const withReviewCheck = await Promise.all(
+    result.map(async (b) => {
+      const reviewed = await hasReviewForBooking(b.id)
+      return reviewed ? null : b
+    })
+  )
+
+  return withReviewCheck.filter((b): b is BookingWithDetails => b !== null).slice(0, limit)
+}
+
 export async function getDashboardStats(userId: string): Promise<DashboardStats> {
   const now = new Date()
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

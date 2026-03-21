@@ -10,8 +10,31 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Perch — Find your perch",
-  description: "Book meeting-ready cafe spaces in 2 minutes",
+  title: {
+    default: "Perch — Find your perch",
+    template: "%s | Perch",
+  },
+  description:
+    "Book meeting-ready cafe spaces in 2 minutes. Verified spaces, instant booking, no WeWork prices.",
+  openGraph: {
+    title: "Perch — Find your perch",
+    description:
+      "Book meeting-ready cafe spaces in 2 minutes. Verified spaces, instant booking, no WeWork prices.",
+    url: "https://getperch.in",
+    siteName: "Perch",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Perch — Find your perch",
+    description:
+      "Book meeting-ready cafe spaces in 2 minutes. Verified spaces, instant booking, no WeWork prices.",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
+  metadataBase: new URL("https://getperch.in"),
 }
 
 export function RootLayout({

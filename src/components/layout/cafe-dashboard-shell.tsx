@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { Badge } from "@/components/ui/badge"
+import { NotificationBell } from "@/components/layout/notification-bell"
 
 type VerificationStatus = "pending" | "verified" | "rejected"
 
@@ -151,6 +152,7 @@ function CafeDashboardShell({
             )?.label ?? "Dashboard"}
           </h1>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             {/* Settings icon on mobile */}
             <Link
               href="/cafe-dashboard/settings"

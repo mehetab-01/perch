@@ -1,12 +1,13 @@
 import { Navbar } from "@/components/layout/navbar"
+import { PageTransition } from "@/components/layout/page-transition"
 
-export function PublicLayout({ children }: { children: React.ReactNode }) {
+function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navbar />
-      {children}
+      <PageTransition>{children}</PageTransition>
     </>
   )
 }
 
-export default PublicLayout
+export { PublicLayout as default }
