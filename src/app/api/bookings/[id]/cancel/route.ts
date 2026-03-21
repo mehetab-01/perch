@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { eq, and } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { bookings, payments } from "@/lib/db/schema"
+import { bookings, payments, cafes, spaces, users } from "@/lib/db/schema"
 import { razorpay } from "@/lib/razorpay"
+import { createNotification } from "@/lib/notifications"
+import { sendEmail } from "@/lib/email"
+import { bookingCancelledEmail } from "@/lib/emails/booking-cancelled"
+import { formatTime, formatDateLong } from "@/lib/utils/format"
 
 // ── Refund policy ──
 // >24h before booking: 100% refund
@@ -48,8 +52,11 @@ export async function POST(
       status: bookings.status,
       date: bookings.date,
       startTime: bookings.startTime,
+      endTime: bookings.endTime,
       totalAmount: bookings.totalAmount,
       razorpayPaymentId: bookings.razorpayPaymentId,
+      cafeId: bookings.cafeId,
+      spaceId: bookings.spaceId,
     })
     .from(bookings)
     .where(and(eq(bookings.id, id), eq(bookings.workerId, userId)))
@@ -113,6 +120,45 @@ export async function POST(
       updatedAt: new Date(),
     })
     .where(eq(bookings.id, id))
+
+  // ── Notify cafe owner ──
+
+  const [cafe, space] = await Promise.all([
+    db.select({ name: cafes.name, ownerId: cafes.ownerId, address: cafes.address }).from(cafes).where(eq(cafes.id, booking.cafeId)).limit(1),
+    db.select({ name: spaces.name }).from(spaces).where(eq(spaces.id, booking.spaceId)).limit(1),
+  ])
+
+  const cafeName = cafe[0]?.name ?? "the cafe"
+  const cafeOwnerId = cafe[0]?.ownerId
+  const spaceName = space[0]?.name ?? "a space"
+  const dateFormatted = formatDateLong(booking.date)
+  const startFormatted = formatTime(booking.startTime)
+  const endFormatted = formatTime(booking.endTime)
+
+  if (cafeOwnerId) {
+    const [ownerUser] = await db.select({ email: users.email }).from(users).where(eq(users.id, cafeOwnerId)).limit(1)
+
+    await createNotification(
+      cafeOwnerId,
+      "booking_cancelled",
+      "Booking cancelled",
+      `A booking at ${cafeName} on ${dateFormatted} was cancelled.${reason ? ` Reason: ${reason}` : ""}`,
+      { bookingId: booking.id }
+    )
+
+    if (ownerUser?.email) {
+      const { subject, html } = bookingCancelledEmail({
+        cafeName,
+        spaceName,
+        date: dateFormatted,
+        startTime: startFormatted,
+        endTime: endFormatted,
+        reason,
+        recipientRole: "cafe",
+      })
+      await sendEmail(ownerUser.email, subject, html)
+    }
+  }
 
   return NextResponse.json({
     success: true,

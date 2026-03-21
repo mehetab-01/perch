@@ -2,8 +2,11 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { eq, and, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { bookings, reviews, cafes } from "@/lib/db/schema"
+import { bookings, reviews, cafes, users } from "@/lib/db/schema"
 import { createReviewSchema } from "@/lib/validators/review"
+import { createNotification } from "@/lib/notifications"
+import { sendEmail } from "@/lib/email"
+import { reviewReceivedEmail } from "@/lib/emails/review-received"
 
 export async function POST(req: Request) {
   const { userId } = await auth()
@@ -102,6 +105,46 @@ export async function POST(req: Request) {
         updatedAt: new Date(),
       })
       .where(eq(cafes.id, cafeId))
+  }
+
+  // Notify cafe owner about the new review
+  const [cafe] = await db
+    .select({ ownerId: cafes.ownerId, name: cafes.name })
+    .from(cafes)
+    .where(eq(cafes.id, cafeId))
+    .limit(1)
+
+  const [workerUser] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (cafe?.ownerId) {
+    const workerName = workerUser?.name ?? "A professional"
+
+    await createNotification(
+      cafe.ownerId,
+      "review_received",
+      `New ${data.overallRating}★ review`,
+      `${workerName} left a review for ${cafe.name}.${data.comment ? ` "${data.comment.slice(0, 80)}${data.comment.length > 80 ? "..." : ""}"` : ""}`,
+      { reviewId: review!.id, cafeId }
+    )
+
+    const [ownerUser] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, cafe.ownerId))
+      .limit(1)
+
+    if (ownerUser?.email) {
+      const { subject, html } = reviewReceivedEmail({
+        workerName,
+        overallRating: data.overallRating,
+        comment: data.comment,
+      })
+      await sendEmail(ownerUser.email, subject, html)
+    }
   }
 
   return NextResponse.json({ review }, { status: 201 })
