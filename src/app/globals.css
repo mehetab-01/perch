@@ -102,6 +102,28 @@
   --color-muted-foreground: #A8A29E;
 }
 
+/* ── Scrollbar utilities ── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #d6d3d1 transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #d6d3d1;
+  border-radius: 3px;
+}
+.dark .scrollbar-thin {
+  scrollbar-color: #44403c transparent;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #44403c;
+}
+
 /* ── Base styles ── */
 body {
   background: var(--background);
