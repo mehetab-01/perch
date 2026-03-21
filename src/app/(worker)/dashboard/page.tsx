@@ -5,11 +5,13 @@ import {
   getUpcomingBookings,
   getQuickBookCafes,
   getRecentActivity,
+  getReviewableBookings,
 } from "@/lib/queries/dashboard"
 import { StatsBar } from "@/components/dashboard/stats-bar"
 import { UpcomingBookings } from "@/components/dashboard/upcoming-bookings"
 import { QuickBook } from "@/components/dashboard/quick-book"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
+import { ReviewPrompt } from "@/components/booking/review-prompt"
 
 export const metadata = {
   title: "Dashboard | Perch",
@@ -52,14 +54,24 @@ async function DashboardContent() {
   const { userId } = await auth()
   if (!userId) redirect("/sign-in")
 
-  const [upcomingBookings, quickBookCafes, recentActivity] = await Promise.all([
+  const [upcomingBookings, quickBookCafes, recentActivity, reviewableBookings] = await Promise.all([
     getUpcomingBookings(userId),
     getQuickBookCafes(userId),
     getRecentActivity(userId),
+    getReviewableBookings(userId, 1),
   ])
 
   return (
     <div className="space-y-8">
+      {/* Review banner */}
+      {reviewableBookings.length > 0 && (
+        <ReviewPrompt
+          bookingId={reviewableBookings[0]!.id}
+          cafeName={reviewableBookings[0]!.cafeName}
+          variant="banner"
+        />
+      )}
+
       {/* Stats */}
       <Suspense fallback={<StatsSkeleton />}>
         <StatsBar userId={userId} />

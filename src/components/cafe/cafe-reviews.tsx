@@ -23,7 +23,9 @@ function RatingBar({ stars, count, total }: RatingBarProps) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-8 text-xs text-muted-foreground">{count}</span>
+      <span className="w-10 text-right text-xs text-muted-foreground">
+        {Math.round(pct)}%
+      </span>
     </div>
   )
 }
@@ -36,15 +38,32 @@ type AttrRatingProps = {
   value: number | null
 }
 
+const attrColors: Record<string, string> = {
+  WiFi: "bg-blue-500",
+  Noise: "bg-emerald-500",
+  Space: "bg-amber-500",
+  Staff: "bg-purple-500",
+}
+
 function AttrRating({ icon, label, value }: AttrRatingProps) {
   if (value === null) return null
+  const pct = (value / 5) * 100
+  const barColor = attrColors[label] ?? "bg-perch-primary-400"
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="flex-1 text-foreground">{label}</span>
-      <div className="flex items-center gap-1">
-        <span className="font-semibold text-foreground">{value.toFixed(1)}</span>
-        <Star className="size-3 fill-perch-primary-400 text-perch-primary-400" />
+    <div className="space-y-1">
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="flex-1 text-foreground">{label}</span>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-foreground">{value.toFixed(1)}</span>
+          <Star className="size-3 fill-perch-primary-400 text-perch-primary-400" />
+        </div>
+      </div>
+      <div className="ml-6 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn("h-full rounded-full transition-all", barColor)}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   )
@@ -138,7 +157,7 @@ function ReviewCard({ review, index }: ReviewCardProps) {
 
 /* ── Main component ── */
 
-const REVIEWS_PER_PAGE = 5
+const REVIEWS_PER_PAGE = 10
 
 type CafeReviewsProps = {
   reviews: ReviewWithAuthor[]
@@ -261,7 +280,7 @@ function CafeReviews({ reviews, avgRating, totalReviews }: CafeReviewsProps) {
             variant="outline"
             onClick={() => setShowCount((c) => c + REVIEWS_PER_PAGE)}
           >
-            Show more reviews
+            Load more reviews
           </Button>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { auth } from "@clerk/nextjs/server"
 import { redirect, notFound } from "next/navigation"
-import { getBookingById } from "@/lib/queries/dashboard"
+import { getBookingById, hasReviewForBooking } from "@/lib/queries/dashboard"
 import { BookingDetail } from "@/components/dashboard/booking-detail"
 
 export async function generateMetadata({
@@ -33,7 +33,11 @@ async function BookingDetailContent({ id }: { id: string }) {
   const booking = await getBookingById(userId, id)
   if (!booking) notFound()
 
-  return <BookingDetail booking={booking} />
+  const reviewExists = booking.status === "completed"
+    ? await hasReviewForBooking(id)
+    : false
+
+  return <BookingDetail booking={booking} hasReview={reviewExists} />
 }
 
 async function BookingDetailPage({

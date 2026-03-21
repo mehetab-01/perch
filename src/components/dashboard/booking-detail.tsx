@@ -22,6 +22,7 @@ import { toDataURL } from "qrcode"
 import { cn } from "@/lib/utils/cn"
 import { formatTime, formatDateLong, formatPaise } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
+import { ReviewPrompt } from "@/components/booking/review-prompt"
 import type { BookingWithDetails } from "@/types/dashboard"
 
 const statusSteps = [
@@ -44,7 +45,13 @@ function getStepIndex(status: string): number {
   return idx === -1 ? -1 : idx
 }
 
-export function BookingDetail({ booking }: { booking: BookingWithDetails }) {
+export function BookingDetail({
+  booking,
+  hasReview = false,
+}: {
+  booking: BookingWithDetails
+  hasReview?: boolean
+}) {
   const router = useRouter()
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
@@ -335,30 +342,12 @@ export function BookingDetail({ booking }: { booking: BookingWithDetails }) {
           )}
 
           {/* Review prompt */}
-          {isCompleted && (
-            <div className="rounded-xl border border-perch-primary-200 bg-perch-primary-50 p-6 dark:border-perch-primary-800 dark:bg-perch-primary-950/50">
-              <div className="flex items-start gap-3">
-                <Star className="mt-0.5 h-5 w-5 text-perch-primary-500" />
-                <div>
-                  <h3 className="font-semibold text-foreground">
-                    How was your experience?
-                  </h3>
-                  <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    Leave a review to help other professionals find great spaces.
-                  </p>
-                  <Link
-                    href={`/cafe/${booking.cafeSlug}`}
-                    className={cn(
-                      "mt-3 inline-flex items-center gap-1.5 rounded-lg bg-perch-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors",
-                      "hover:bg-perch-primary-600"
-                    )}
-                  >
-                    <Star className="h-4 w-4" />
-                    Leave a review
-                  </Link>
-                </div>
-              </div>
-            </div>
+          {isCompleted && !hasReview && (
+            <ReviewPrompt
+              bookingId={booking.id}
+              cafeName={booking.cafeName}
+              variant="card"
+            />
           )}
         </div>
       </div>
