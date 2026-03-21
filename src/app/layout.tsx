@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
+import { ToastProvider } from "@/components/ui/toast"
 import "./globals.css"
 
 const inter = Inter({
@@ -21,7 +22,9 @@ export function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
-        <body className="min-h-full flex flex-col font-sans">{children}</body>
+        <body className="min-h-full flex flex-col font-sans">
+          <ToastProvider>{children}</ToastProvider>
+        </body>
       </html>
     </ClerkProvider>
   )

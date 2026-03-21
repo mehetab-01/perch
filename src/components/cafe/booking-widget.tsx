@@ -2,22 +2,36 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Clock, Users, ChevronUp, X } from "lucide-react"
+import { Calendar, Clock, Users, ChevronUp, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/cn"
+import { useBooking } from "@/hooks/use-booking"
+import { PaymentSuccess } from "@/components/booking/payment-success"
 import type { Space } from "@/lib/db/schema"
 
 const PLATFORM_FEE_RATE = 0.05
 const GST_RATE = 0.18
 
 type BookingWidgetProps = {
+  cafeId: string
+  cafeName: string
   spaces: Space[]
   selectedSpaceId: string | null
   onSelectSpace: (spaceId: string) => void
   isSignedIn: boolean
 }
 
+function calculateEndTime(startTime: string, durationHours: number): string {
+  const [h, m] = startTime.split(":").map(Number) as [number, number]
+  const totalMinutes = h * 60 + m + durationHours * 60
+  const endH = Math.floor(totalMinutes / 60) % 24
+  const endM = totalMinutes % 60
+  return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`
+}
+
 function BookingWidget({
+  cafeId,
+  cafeName,
   spaces,
   selectedSpaceId,
   onSelectSpace,
@@ -28,6 +42,9 @@ function BookingWidget({
   const [duration, setDuration] = useState(1)
   const [people, setPeople] = useState(2)
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const { isLoading, error, bookingId, paymentStatus, createBooking, reset } =
+    useBooking()
 
   const activeSpaces = spaces.filter((s) => s.isActive)
   const selectedSpace = activeSpaces.find((s) => s.id === selectedSpaceId)
@@ -43,35 +60,83 @@ function BookingWidget({
     return { base, platformFee, gst, total }
   })()
 
-  const handleBook = () => {
+  const endTime = calculateEndTime(startTime, duration)
+  const canBook = selectedSpace && date && startTime && duration > 0 && !isLoading
+
+  const handleBook = async () => {
     if (!isSignedIn) {
-      window.location.href = "/sign-in"
+      const returnUrl = encodeURIComponent(window.location.pathname)
+      window.location.href = `/sign-in?redirect_url=${returnUrl}`
       return
     }
-    if (!selectedSpace || !date) return
-    // Razorpay integration will go here
-    alert(
-      `Booking confirmed!\n\nSpace: ${selectedSpace.name}\nDate: ${date}\nTime: ${startTime}\nDuration: ${duration}h\nPeople: ${people}\nTotal: ₹${pricing ? Math.round(pricing.total / 100) : 0}`
+    if (!selectedSpace || !date || !pricing) return
+
+    setMobileOpen(false)
+
+    await createBooking({
+      spaceId: selectedSpace.id,
+      cafeId,
+      date,
+      startTime,
+      endTime,
+      durationHours: duration,
+      numAttendees: people,
+    })
+  }
+
+  // Show success overlay when payment completes
+  if (paymentStatus === "success" && bookingId) {
+    return (
+      <PaymentSuccess
+        bookingId={bookingId}
+        cafeName={cafeName}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        amountPaid={pricing?.total}
+      />
     )
   }
 
-  const canBook = selectedSpace && date && startTime && duration > 0
+  const buttonLabel = (() => {
+    if (!isSignedIn) return "Sign in to book"
+    if (isLoading) {
+      if (paymentStatus === "creating") return "Creating booking..."
+      if (paymentStatus === "checkout") return "Complete payment..."
+      return "Processing..."
+    }
+    if (canBook) return `Book now — ₹${pricing ? Math.round(pricing.total / 100) : 0}`
+    return "Select space & date"
+  })()
 
   const formContent = (
-    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleBook() }} role="form" aria-label="Book this space">
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleBook()
+      }}
+      role="form"
+      aria-label="Book this space"
+    >
       {/* Space selector (if multiple) */}
       {activeSpaces.length > 1 && (
         <div>
-          <label htmlFor="bw-space" className="mb-1.5 block text-sm font-medium text-foreground">
+          <label
+            htmlFor="bw-space"
+            className="mb-1.5 block text-sm font-medium text-foreground"
+          >
             Space
           </label>
           <select
             id="bw-space"
             value={selectedSpaceId ?? ""}
             onChange={(e) => onSelectSpace(e.target.value)}
+            disabled={isLoading}
             className={cn(
               "w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground",
-              "focus:outline-none focus:ring-2 focus:ring-ring"
+              "focus:outline-none focus:ring-2 focus:ring-ring",
+              "disabled:opacity-50"
             )}
           >
             <option value="" disabled>
@@ -88,7 +153,10 @@ function BookingWidget({
 
       {/* Date */}
       <div>
-        <label htmlFor="bw-date" className="mb-1.5 block text-sm font-medium text-foreground">
+        <label
+          htmlFor="bw-date"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
           <Calendar className="mr-1.5 inline size-4 text-muted-foreground" />
           Date
         </label>
@@ -98,16 +166,21 @@ function BookingWidget({
           value={date}
           onChange={(e) => setDate(e.target.value)}
           min={new Date().toISOString().split("T")[0]}
+          disabled={isLoading}
           className={cn(
             "w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-ring"
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            "disabled:opacity-50"
           )}
         />
       </div>
 
       {/* Start time */}
       <div>
-        <label htmlFor="bw-time" className="mb-1.5 block text-sm font-medium text-foreground">
+        <label
+          htmlFor="bw-time"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
           <Clock className="mr-1.5 inline size-4 text-muted-foreground" />
           Start time
         </label>
@@ -117,16 +190,21 @@ function BookingWidget({
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
           step={1800}
+          disabled={isLoading}
           className={cn(
             "w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-ring"
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            "disabled:opacity-50"
           )}
         />
       </div>
 
       {/* Duration */}
       <div>
-        <label htmlFor="bw-duration" className="mb-1.5 block text-sm font-medium text-foreground">
+        <label
+          htmlFor="bw-duration"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
           Duration
         </label>
         <div className="flex items-center gap-2">
@@ -135,8 +213,10 @@ function BookingWidget({
               key={h}
               type="button"
               onClick={() => setDuration(h)}
+              disabled={isLoading}
               className={cn(
                 "flex-1 rounded-lg border py-2 text-center text-sm font-medium transition-colors",
+                "disabled:opacity-50",
                 duration === h
                   ? "border-perch-primary-500 bg-perch-primary-50 text-perch-primary-700 dark:bg-perch-primary-950/30 dark:text-perch-primary-400"
                   : "border-border text-muted-foreground hover:border-perch-primary-300"
@@ -153,10 +233,14 @@ function BookingWidget({
             min={1}
             max={8}
             value={duration}
-            onChange={(e) => setDuration(Math.max(1, Math.min(8, Number(e.target.value))))}
+            onChange={(e) =>
+              setDuration(Math.max(1, Math.min(8, Number(e.target.value))))
+            }
+            disabled={isLoading}
             className={cn(
               "w-16 rounded-lg border border-input bg-transparent px-2 py-2 text-center text-sm",
-              "focus:outline-none focus:ring-2 focus:ring-ring"
+              "focus:outline-none focus:ring-2 focus:ring-ring",
+              "disabled:opacity-50"
             )}
             aria-label="Custom duration in hours"
           />
@@ -165,7 +249,10 @@ function BookingWidget({
 
       {/* People */}
       <div>
-        <label htmlFor="bw-people" className="mb-1.5 block text-sm font-medium text-foreground">
+        <label
+          htmlFor="bw-people"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
           <Users className="mr-1.5 inline size-4 text-muted-foreground" />
           People
         </label>
@@ -176,21 +263,24 @@ function BookingWidget({
           max={selectedSpace?.capacityMax ?? 20}
           value={people}
           onChange={(e) => setPeople(Math.max(1, Number(e.target.value)))}
+          disabled={isLoading}
           className={cn(
             "w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-ring"
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            "disabled:opacity-50"
           )}
         />
         {selectedSpace && (
           <p className="mt-1 text-xs text-muted-foreground">
-            Capacity: {selectedSpace.capacityMin}-{selectedSpace.capacityMax} people
+            Capacity: {selectedSpace.capacityMin}-{selectedSpace.capacityMax}{" "}
+            people
           </p>
         )}
       </div>
 
       {/* Price breakdown */}
       {pricing && (
-        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5 text-sm">
+        <div className="space-y-1.5 rounded-lg border border-border bg-muted/30 p-3 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>
               ₹{Math.round(selectedSpace!.pricePerHour / 100)} × {duration}h
@@ -212,18 +302,24 @@ function BookingWidget({
         </div>
       )}
 
+      {/* Error message */}
+      {error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+          {error}
+          <button
+            type="button"
+            onClick={reset}
+            className="ml-2 underline hover:no-underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       {/* Book button */}
-      <Button
-        type="submit"
-        disabled={!canBook}
-        size="lg"
-        className="w-full"
-      >
-        {!isSignedIn
-          ? "Sign in to book"
-          : canBook
-            ? `Book now — ₹${pricing ? Math.round(pricing.total / 100) : 0}`
-            : "Select space & date"}
+      <Button type="submit" disabled={!canBook} size="lg" className="w-full">
+        {isLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
+        {buttonLabel}
       </Button>
 
       {!isSignedIn && (
@@ -238,7 +334,7 @@ function BookingWidget({
     <>
       {/* Desktop: sticky sidebar */}
       <aside className="hidden lg:block">
-        <div className="sticky top-20 rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-perch-dark/80 dark:border-stone-800">
+        <div className="sticky top-20 rounded-xl border border-border bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-perch-dark/80">
           {selectedSpace && (
             <p className="mb-4 text-center">
               <span className="text-2xl font-bold text-foreground">
@@ -261,7 +357,7 @@ function BookingWidget({
               animate={{ y: 0 }}
               exit={{ y: 100 }}
               onClick={() => setMobileOpen(true)}
-              className="flex w-full items-center justify-between border-t border-border bg-white px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:bg-stone-900 dark:border-stone-700"
+              className="flex w-full items-center justify-between border-t border-border bg-white px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-stone-700 dark:bg-stone-900"
               aria-label="Open booking form"
             >
               <div className="text-left">
@@ -305,7 +401,7 @@ function BookingWidget({
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-border bg-white p-5 pb-8 dark:bg-stone-900 dark:border-stone-700"
+                className="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-border bg-white p-5 pb-8 dark:border-stone-700 dark:bg-stone-900"
               >
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-display text-lg font-semibold text-foreground">

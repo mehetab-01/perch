@@ -39,6 +39,8 @@ function CafePageClient({ cafe, isSignedIn }: CafePageClientProps) {
           {/* Booking widget sidebar */}
           <div className="lg:w-[380px] lg:shrink-0">
             <BookingWidget
+              cafeId={cafe.id}
+              cafeName={cafe.name}
               spaces={cafe.spaces}
               selectedSpaceId={selectedSpaceId}
               onSelectSpace={setSelectedSpaceId}
