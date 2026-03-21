@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  User,
   Mail,
   Calendar,
   Store,

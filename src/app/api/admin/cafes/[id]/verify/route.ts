@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { cafes, users } from "@/lib/db/schema"
+import { cafes } from "@/lib/db/schema"
 import { isAdmin } from "@/lib/queries/admin"
 import { createNotification } from "@/lib/notifications"
 

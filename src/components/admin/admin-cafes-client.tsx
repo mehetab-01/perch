@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  Store,
   MapPin,
   Calendar,
   User,
@@ -13,7 +12,6 @@ import {
   LayoutGrid,
   CheckCircle2,
   XCircle,
-  Clock,
   X,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"

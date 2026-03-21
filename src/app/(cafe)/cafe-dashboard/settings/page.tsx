@@ -1,5 +1,8 @@
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import { auth } from "@clerk/nextjs/server"
+
+export const metadata: Metadata = { title: "Settings" }
 import { redirect } from "next/navigation"
 import { getOwnedCafe } from "@/lib/queries/cafe-dashboard"
 import { CafeSettingsClient } from "@/components/cafe-dashboard/settings-client"

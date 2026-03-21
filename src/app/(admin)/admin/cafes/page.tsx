@@ -1,4 +1,9 @@
+export const dynamic = "force-dynamic"
+
+import type { Metadata } from "next"
 import { getAdminCafes } from "@/lib/queries/admin"
+
+export const metadata: Metadata = { title: "Cafes — Admin" }
 import { AdminCafesClient } from "@/components/admin/admin-cafes-client"
 
 async function AdminCafesPage() {

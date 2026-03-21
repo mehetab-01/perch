@@ -1,7 +1,12 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell"
+import { PageTransition } from "@/components/layout/page-transition"
 
 function WorkerLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>
+  return (
+    <DashboardShell>
+      <PageTransition>{children}</PageTransition>
+    </DashboardShell>
+  )
 }
 
-export default WorkerLayout
+export { WorkerLayout as default }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { NotificationBell } from "@/components/layout/notification-bell"
+import { PageTransition } from "@/components/layout/page-transition"
 
 const sidebarLinks = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
@@ -120,7 +121,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </div>
       </main>
     </div>
