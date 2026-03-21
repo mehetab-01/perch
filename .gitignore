@@ -52,3 +52,12 @@ drizzle/meta
 
 # VS Code
 .vscode/settings.json
+
+# Claude Code (keep CLAUDE.md, AGENTS.md, .claude/agents/, .claude/commands/, .claude/skills/, .claude/settings.json)
+.claude/settings.local.json
+
+# TestSprite
+testsprite_tests/
+
+# Logs
+*.log

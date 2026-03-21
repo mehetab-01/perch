@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, Users, ChevronUp, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ function BookingWidget({
   const selectedSpace = activeSpaces.find((s) => s.id === selectedSpaceId)
 
   // Price calculation (all in paise)
-  const pricing = useMemo(() => {
+  const pricing = (() => {
     if (!selectedSpace) return null
     const base = selectedSpace.pricePerHour * duration
     const platformFee = Math.round(base * PLATFORM_FEE_RATE)
@@ -41,7 +41,7 @@ function BookingWidget({
     const gst = Math.round(subtotal * GST_RATE)
     const total = subtotal + gst
     return { base, platformFee, gst, total }
-  }, [selectedSpace, duration])
+  })()
 
   const handleBook = () => {
     if (!isSignedIn) {

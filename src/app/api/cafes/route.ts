@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     )
   }
 
-  const { name, description, address, city, latitude, longitude, coverPhotoUrl } = parsed.data
+  const { name, description, address, city, latitude, longitude } = parsed.data
   const slug = generateSlug(name)
 
   const result = await db

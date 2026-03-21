@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Container } from "@/components/ui/container"
 import { CafeHero } from "@/components/cafe/cafe-hero"
 import { CafeSpaces } from "@/components/cafe/cafe-spaces"
@@ -17,13 +17,6 @@ function CafePageClient({ cafe, isSignedIn }: CafePageClientProps) {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(
     activeSpaces.length === 1 ? activeSpaces[0]!.id : null
   )
-
-  // Auto-select if only one space
-  useEffect(() => {
-    if (activeSpaces.length === 1 && !selectedSpaceId) {
-      setSelectedSpaceId(activeSpaces[0]!.id)
-    }
-  }, [activeSpaces, selectedSpaceId])
 
   // Collect all photos across spaces
   const allPhotos = activeSpaces.flatMap((s) => s.photos)

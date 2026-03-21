@@ -120,7 +120,7 @@ function StepCard({ step, index, accent }: { step: Step; index: number; accent: 
 
 export function HowItWorks() {
   return (
-    <section className="bg-neutral-50 py-24 dark:bg-neutral-950 sm:py-32">
+    <section id="how-it-works" className="bg-neutral-50 py-24 dark:bg-neutral-950 sm:py-32">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="mb-16 flex flex-col items-center gap-3 text-center">

@@ -7,7 +7,6 @@ import { SearchX, ChevronLeft, ChevronRight } from "lucide-react"
 import { CafeSearchCard } from "@/components/search/cafe-search-card"
 import { SearchSort } from "@/components/search/search-sort"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils/cn"
 import type { SearchResponse, SearchCafe } from "@/types/search"
 
 /* ── Skeleton loader ── */

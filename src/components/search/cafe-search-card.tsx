@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Star, Users, Volume2 } from "lucide-react"
+import { Star, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils/cn"
 import type { SearchCafe } from "@/types/search"

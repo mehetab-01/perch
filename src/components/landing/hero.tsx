@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { MapPin, Calendar, Users, Search, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
@@ -10,6 +11,8 @@ const fadeUp = {
 }
 
 export function Hero() {
+  const router = useRouter()
+
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 pt-16">
       {/* Animated gradient background */}
@@ -106,7 +109,18 @@ export function Hero() {
           <form
             role="search"
             aria-label="Search for cafe spaces"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault()
+              const form = e.currentTarget
+              const location = (form.elements.namedItem("location") as HTMLInputElement).value.trim()
+              const date = (form.elements.namedItem("date") as HTMLInputElement).value
+              const people = (form.elements.namedItem("people") as HTMLInputElement).value
+              const params = new URLSearchParams()
+              if (location) params.set("city", location)
+              if (date) params.set("date", date)
+              if (people) params.set("people", people)
+              router.push(`/search${params.size ? `?${params}` : ""}`)
+            }}
             className={cn(
               "flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl",
               "sm:flex-row sm:items-center sm:gap-0 sm:rounded-full sm:p-2"
@@ -121,6 +135,7 @@ export function Hero() {
             >
               <MapPin className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
               <input
+                name="location"
                 type="text"
                 placeholder="Mumbai, Bandra..."
                 aria-label="Search location"
@@ -140,6 +155,7 @@ export function Hero() {
             >
               <Calendar className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
               <input
+                name="date"
                 type="date"
                 aria-label="Select date"
                 className="w-full bg-transparent text-sm text-white placeholder-neutral-500 outline-none [color-scheme:dark]"
@@ -158,6 +174,7 @@ export function Hero() {
             >
               <Users className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
               <input
+                name="people"
                 type="number"
                 min={1}
                 max={20}

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Users, Volume2, Check } from "lucide-react"
+import { Users, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils/cn"
 import type { Space } from "@/lib/db/schema"
