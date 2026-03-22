@@ -247,7 +247,7 @@ function AdminCafesClient({ pending, verified, rejected }: AdminCafesClientProps
                   />
                   <div className="flex gap-2">
                     <Button
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white"
                       onClick={() => handleVerify(selectedCafe.id, "verified")}
                       disabled={submitting}
                     >

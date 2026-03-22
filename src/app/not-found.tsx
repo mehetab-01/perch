@@ -391,7 +391,7 @@ function CafeSilhouette() {
 
 /* ── Main 404 page ── */
 
-export default function NotFound() {
+function NotFound() {
   const rawX = useMotionValue(0)
   const smoothX = useSpring(rawX, { stiffness: 50, damping: 20 })
   const steamX = useTransform(smoothX, [-400, 400], [-8, 8])
@@ -547,3 +547,5 @@ export default function NotFound() {
     </div>
   )
 }
+
+export { NotFound as default }

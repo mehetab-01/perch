@@ -15,7 +15,6 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
-import { Badge } from "@/components/ui/badge"
 import { NotificationBell } from "@/components/layout/notification-bell"
 
 type VerificationStatus = "pending" | "verified" | "rejected"

@@ -8,7 +8,6 @@ import {
   Trash2,
   Users,
   IndianRupee,
-  X,
   Loader2,
   ImageOff,
 } from "lucide-react"
@@ -16,8 +15,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils/cn"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/toast"
 import { formatPaise } from "@/lib/utils/format"
 import type { Space } from "@/lib/db/schema"
@@ -139,7 +136,7 @@ function CafeSpacesClient({ cafeId, initialSpaces }: SpacesClientProps) {
                       "rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm",
                       space.isActive
                         ? "bg-emerald-500/90 text-white"
-                        : "bg-neutral-500/90 text-white"
+                        : "bg-neutral-500/90 text-white dark:bg-stone-500/90"
                     )}
                   >
                     {space.isActive ? "Active" : "Inactive"}
@@ -172,7 +169,7 @@ function CafeSpacesClient({ cafeId, initialSpaces }: SpacesClientProps) {
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2",
                       "disabled:cursor-not-allowed disabled:opacity-50",
                       space.isActive
-                        ? "bg-emerald-500"
+                        ? "bg-emerald-500 dark:bg-emerald-600"
                         : "bg-neutral-300 dark:bg-stone-600"
                     )}
                     role="switch"

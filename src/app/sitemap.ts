@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { cafes } from "@/lib/db/schema"
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let verifiedCafes: { slug: string; updatedAt: Date }[] = []
 
   try {
@@ -46,3 +46,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cafePages,
   ]
 }
+
+export { sitemap as default }

@@ -53,4 +53,4 @@ export function RootLayout({
   )
 }
 
-export default RootLayout
+export { RootLayout as default }

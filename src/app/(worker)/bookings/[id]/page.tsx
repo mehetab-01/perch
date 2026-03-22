@@ -54,4 +54,4 @@ async function BookingDetailPage({
   )
 }
 
-export default BookingDetailPage
+export { BookingDetailPage as default }

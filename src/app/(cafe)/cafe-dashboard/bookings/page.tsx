@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-
-export const metadata: Metadata = { title: "Bookings" }
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import {
@@ -9,6 +7,8 @@ import {
   getCafeBookingsByFilter,
 } from "@/lib/queries/cafe-dashboard"
 import { CafeBookingsClient } from "@/components/cafe-dashboard/bookings-client"
+
+export const metadata: Metadata = { title: "Bookings" }
 
 function BookingsSkeleton() {
   return (
@@ -49,7 +49,6 @@ async function BookingsContent() {
 
   return (
     <CafeBookingsClient
-      cafeId={cafe.id}
       initialData={{ today, upcoming, completed, cancelled }}
     />
   )
@@ -63,4 +62,4 @@ function CafeBookingsPage() {
   )
 }
 
-export default CafeBookingsPage
+export { CafeBookingsPage as default }

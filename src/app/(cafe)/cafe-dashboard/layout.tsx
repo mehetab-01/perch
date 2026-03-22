@@ -29,4 +29,4 @@ async function CafeDashboardLayout({
   )
 }
 
-export default CafeDashboardLayout
+export { CafeDashboardLayout as default }

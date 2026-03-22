@@ -136,4 +136,4 @@ function DashboardPage() {
   )
 }
 
-export default DashboardPage
+export { DashboardPage as default }

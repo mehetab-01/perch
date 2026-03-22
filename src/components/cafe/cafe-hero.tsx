@@ -160,14 +160,14 @@ function CafeHero({ cafeName, photos }: CafeHeroProps) {
           <>
             <button
               onClick={() => goTo(currentIndex - 1)}
-              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/50 dark:bg-white/20 dark:hover:bg-white/40"
               aria-label="Previous photo"
             >
               <ChevronLeft className="size-5" />
             </button>
             <button
               onClick={() => goTo(currentIndex + 1)}
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/50 dark:bg-white/20 dark:hover:bg-white/40"
               aria-label="Next photo"
             >
               <ChevronRight className="size-5" />

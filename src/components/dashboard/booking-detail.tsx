@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
@@ -15,7 +16,6 @@ import {
   CheckCircle2,
   Circle,
   ArrowLeft,
-  Star,
   AlertTriangle,
 } from "lucide-react"
 import { toDataURL } from "qrcode"
@@ -322,12 +322,13 @@ export function BookingDetail({
               </h2>
               <div className="flex items-center justify-center">
                 {qrDataUrl ? (
-                  <img
+                  <Image
                     src={qrDataUrl}
                     alt={`QR code for checking in at ${booking.cafeName}`}
                     width={200}
                     height={200}
                     className="rounded-lg"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex h-[200px] w-[200px] items-center justify-center rounded-lg bg-neutral-100 dark:bg-stone-800">

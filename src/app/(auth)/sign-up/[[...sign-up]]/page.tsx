@@ -3,7 +3,7 @@
 import { SignUp } from "@clerk/nextjs"
 import { motion } from "framer-motion"
 
-export default function SignUpPage() {
+function SignUpPage() {
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-neutral-950">
       {/* Animated gradient background */}
@@ -41,3 +41,5 @@ export default function SignUpPage() {
     </main>
   )
 }
+
+export { SignUpPage as default }

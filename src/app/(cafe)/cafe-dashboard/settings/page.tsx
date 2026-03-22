@@ -39,4 +39,4 @@ function CafeSettingsPage() {
   )
 }
 
-export default CafeSettingsPage
+export { CafeSettingsPage as default }

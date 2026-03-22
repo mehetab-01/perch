@@ -72,7 +72,7 @@ function ForCafesHero() {
         <motion.div
           {...fadeUp}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10 flex items-center justify-center gap-12"
+          className="mt-10 flex flex-wrap items-center justify-center gap-6 sm:gap-12"
         >
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-2xl font-bold text-white">

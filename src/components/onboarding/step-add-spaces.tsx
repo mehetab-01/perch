@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion, AnimatePresence } from "framer-motion"
@@ -394,7 +395,7 @@ function SpaceForm({ cafeId, initial, onSave, onCancel }: SpaceFormProps) {
             <div className="mb-2 flex flex-wrap gap-2">
               {photos.map((url, i) => (
                 <div key={url} className="relative size-20 overflow-hidden rounded-lg">
-                  <img src={url} alt={`Space photo ${i + 1}`} className="h-full w-full object-cover" />
+                  <Image src={url} alt={`Space photo ${i + 1}`} fill className="object-cover" unoptimized />
                   <button
                     type="button"
                     onClick={() => setValue("photos", photos.filter((_, j) => j !== i))}

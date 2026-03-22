@@ -210,4 +210,4 @@ function BookingsPage() {
   )
 }
 
-export default BookingsPage
+export { BookingsPage as default }

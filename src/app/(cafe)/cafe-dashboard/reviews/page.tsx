@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-
-export const metadata: Metadata = { title: "Reviews" }
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import {
@@ -10,6 +8,8 @@ import {
   getCafeReviewStats,
 } from "@/lib/queries/cafe-dashboard"
 import { CafeReviewsClient } from "@/components/cafe-dashboard/reviews-client"
+
+export const metadata: Metadata = { title: "Reviews" }
 
 function ReviewsSkeleton() {
   return (
@@ -59,4 +59,4 @@ function CafeReviewsPage() {
   )
 }
 
-export default CafeReviewsPage
+export { CafeReviewsPage as default }

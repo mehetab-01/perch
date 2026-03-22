@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-
-export const metadata: Metadata = { title: "Spaces" }
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getOwnedCafeWithSpaces } from "@/lib/queries/cafe-dashboard"
 import { CafeSpacesClient } from "@/components/cafe-dashboard/spaces-client"
+
+export const metadata: Metadata = { title: "Spaces" }
 
 function SpacesSkeleton() {
   return (
@@ -46,4 +46,4 @@ function CafeSpacesPage() {
   )
 }
 
-export default CafeSpacesPage
+export { CafeSpacesPage as default }

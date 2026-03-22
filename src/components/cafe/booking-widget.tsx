@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, Users, ChevronUp, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ function BookingWidget({
   const [people, setPeople] = useState(2)
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  const router = useRouter()
   const { isLoading, error, bookingId, paymentStatus, createBooking, reset } =
     useBooking()
 
@@ -66,7 +68,7 @@ function BookingWidget({
   const handleBook = async () => {
     if (!isSignedIn) {
       const returnUrl = encodeURIComponent(window.location.pathname)
-      window.location.href = `/sign-in?redirect_url=${returnUrl}`
+      router.push(`/sign-in?redirect_url=${returnUrl}`)
       return
     }
     if (!selectedSpace || !date || !pricing) return

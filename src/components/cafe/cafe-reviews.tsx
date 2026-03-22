@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Star, Wifi, Volume2, Maximize, UserCheck, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -98,10 +99,13 @@ function ReviewCard({ review, index }: ReviewCardProps) {
       <div className="flex items-start gap-3">
         {/* Avatar */}
         {review.worker.avatarUrl ? (
-          <img
+          <Image
             src={review.worker.avatarUrl}
             alt={`${review.worker.name}'s avatar`}
+            width={40}
+            height={40}
             className="size-10 rounded-full object-cover"
+            unoptimized
           />
         ) : (
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-perch-primary-100 text-sm font-semibold text-perch-primary-700 dark:bg-perch-primary-950 dark:text-perch-primary-400">

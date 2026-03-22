@@ -13,6 +13,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // React Hook Form's watch() is incompatible with React Compiler memoization.
+  // The compiler already skips these components — suppress the noisy warnings.
+  {
+    files: ["src/components/onboarding/**/*.tsx"],
+    rules: {
+      "react-hooks/incompatible-library": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

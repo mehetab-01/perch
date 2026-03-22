@@ -50,4 +50,4 @@ export function LandingPage() {
   )
 }
 
-export default LandingPage
+export { LandingPage as default }

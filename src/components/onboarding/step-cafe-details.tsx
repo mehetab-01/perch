@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { MapPin, Navigation } from "lucide-react"
@@ -206,7 +207,7 @@ function StepCafeDetails({ state, onNext }: StepCafeDetailsProps) {
         </label>
         {coverPhotoUrl ? (
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <img src={coverPhotoUrl} alt="Cafe cover photo" className="h-full w-full object-cover" />
+            <Image src={coverPhotoUrl} alt="Cafe cover photo" fill className="object-cover" unoptimized />
             <button
               type="button"
               onClick={() => setValue("coverPhotoUrl", "")}

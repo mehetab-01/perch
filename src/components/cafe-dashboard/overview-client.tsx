@@ -6,17 +6,13 @@ import {
   CalendarDays,
   Star,
   CalendarOff,
-  RefreshCw,
   ArrowRight,
   Clock,
   Users,
-  CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { formatPaise, formatTime, formatDateShort } from "@/lib/utils/format"
+import { formatPaise, formatTime } from "@/lib/utils/format"
 import type {
   CafeBookingWithDetails,
   CafeDashboardStats,

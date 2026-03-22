@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Star, X } from "lucide-react"
-import { cn } from "@/lib/utils/cn"
 import { Button } from "@/components/ui/button"
 import { ReviewForm } from "@/components/booking/review-form"
 

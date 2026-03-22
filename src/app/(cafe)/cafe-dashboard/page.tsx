@@ -66,4 +66,4 @@ function CafeDashboardPage() {
   )
 }
 
-export default CafeDashboardPage
+export { CafeDashboardPage as default }

@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-
-export const metadata: Metadata = { title: "Earnings" }
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import {
@@ -11,6 +9,8 @@ import {
   getCafeTransactions,
 } from "@/lib/queries/cafe-dashboard"
 import { CafeEarningsClient } from "@/components/cafe-dashboard/earnings-client"
+
+export const metadata: Metadata = { title: "Earnings" }
 
 function EarningsSkeleton() {
   return (
@@ -66,4 +66,4 @@ function CafeEarningsPage() {
   )
 }
 
-export default CafeEarningsPage
+export { CafeEarningsPage as default }

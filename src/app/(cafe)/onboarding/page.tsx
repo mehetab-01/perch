@@ -170,4 +170,4 @@ function OnboardingPage() {
   )
 }
 
-export default OnboardingPage
+export { OnboardingPage as default }

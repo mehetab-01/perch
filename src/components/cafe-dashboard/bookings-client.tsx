@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   X,
   Loader2,
-  QrCode,
   Hash,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -22,7 +21,6 @@ import type { CafeBookingWithDetails } from "@/types/cafe-dashboard"
 type TabKey = "today" | "upcoming" | "completed" | "cancelled"
 
 type BookingsProps = {
-  cafeId: string
   initialData: Record<TabKey, CafeBookingWithDetails[]>
 }
 
@@ -70,7 +68,7 @@ function isPassedEndTime(date: string, endTime: string): boolean {
   return now > endDate
 }
 
-function CafeBookingsClient({ cafeId, initialData }: BookingsProps) {
+function CafeBookingsClient({ initialData }: BookingsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("today")
   const [data, setData] = useState(initialData)
   const [checkinModalBooking, setCheckinModalBooking] = useState<CafeBookingWithDetails | null>(null)

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-export default function robots(): MetadataRoute.Robots {
+function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
@@ -12,3 +12,5 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: "https://getperch.in/sitemap.xml",
   }
 }
+
+export { robots as default }

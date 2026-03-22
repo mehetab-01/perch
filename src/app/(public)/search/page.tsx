@@ -55,4 +55,4 @@ function SearchPage() {
   )
 }
 
-export default SearchPage
+export { SearchPage as default }

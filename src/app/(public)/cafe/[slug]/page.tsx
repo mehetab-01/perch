@@ -150,4 +150,4 @@ async function CafePage({ params }: CafePageProps) {
   )
 }
 
-export default CafePage
+export { CafePage as default }
