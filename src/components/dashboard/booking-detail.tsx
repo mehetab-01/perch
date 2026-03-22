@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { ReviewPrompt } from "@/components/booking/review-prompt"
 import { AgendaGenerator } from "@/components/booking/agenda-generator"
 import { NotesGenerator } from "@/components/booking/notes-generator"
+import { AddToCalendar } from "@/components/booking/add-to-calendar"
 import type { BookingWithDetails } from "@/types/dashboard"
 
 const statusSteps = [
@@ -397,6 +398,26 @@ export function BookingDetail({
                 Show this QR code at the cafe to check in
               </p>
             </div>
+          )}
+
+          {/* Add to Calendar — for confirmed or checked-in bookings */}
+          {(booking.status === "confirmed" || booking.status === "checked_in") && (
+            <AddToCalendar
+              event={{
+                id: booking.id,
+                date: booking.date,
+                startTime: booking.startTime,
+                endTime: booking.endTime,
+                cafeName: booking.cafeName,
+                cafeAddress: booking.cafeAddress,
+                spaceName: booking.spaceName,
+                numAttendees: booking.numAttendees,
+                meetingTitle: booking.meetingTitle,
+                agenda: savedAgenda,
+                isRecurring: booking.isRecurring,
+                recurrencePattern: booking.recurrencePattern,
+              }}
+            />
           )}
 
           {/* Review prompt */}

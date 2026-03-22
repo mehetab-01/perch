@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email"
 import { bookingConfirmedEmail } from "@/lib/emails/booking-confirmed"
 import { newBookingCafeEmail } from "@/lib/emails/new-booking-cafe"
 import { formatTime, formatDateLong } from "@/lib/utils/format"
+import { generateGoogleCalendarUrl } from "@/lib/calendar"
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -87,6 +88,19 @@ export async function POST(req: NextRequest) {
         )
 
         if (workerEmail) {
+          const googleCalendarUrl = generateGoogleCalendarUrl({
+            id: confirmedBooking.id,
+            date: confirmedBooking.date,
+            startTime: confirmedBooking.startTime,
+            endTime: confirmedBooking.endTime,
+            cafeName,
+            cafeAddress,
+            spaceName,
+            numAttendees: confirmedBooking.numAttendees,
+            meetingTitle: null,
+            agenda: null,
+          })
+
           const { subject, html } = bookingConfirmedEmail({
             cafeName,
             spaceName,
@@ -95,6 +109,7 @@ export async function POST(req: NextRequest) {
             endTime: endFormatted,
             address: cafeAddress,
             bookingId: confirmedBooking.id,
+            googleCalendarUrl,
           })
           await sendEmail(workerEmail, subject, html)
         }

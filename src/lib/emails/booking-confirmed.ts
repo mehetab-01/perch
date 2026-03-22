@@ -8,12 +8,25 @@ type BookingConfirmedData = {
   endTime: string
   address: string
   bookingId: string
+  googleCalendarUrl?: string
 }
 
 export function bookingConfirmedEmail(data: BookingConfirmedData): {
   subject: string
   html: string
 } {
+  const calendarLink = data.googleCalendarUrl
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0;">
+        <tr>
+          <td style="background-color:#ffffff; border:1px solid #e5e5e5; border-radius:8px; padding:10px 20px;">
+            <a href="${data.googleCalendarUrl}" style="color:#1a73e8; font-size:13px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" target="_blank" rel="noopener noreferrer">
+              📅 Add to Google Calendar
+            </a>
+          </td>
+        </tr>
+      </table>`
+    : ""
+
   const content = `
     <h1 style="margin:0 0 8px; font-size:22px; font-weight:700; color:#1a1a1a;">Your meeting is confirmed!</h1>
     <p style="margin:0 0 24px; font-size:15px; color:#525252; line-height:1.5;">
@@ -29,7 +42,9 @@ export function bookingConfirmedEmail(data: BookingConfirmedData): {
 
     ${ctaButton("View Booking Details", `${process.env.NEXT_PUBLIC_APP_URL || "https://perch.so"}/bookings/${data.bookingId}`)}
 
-    <p style="margin:0; font-size:13px; color:#737373; line-height:1.5;">
+    ${calendarLink}
+
+    <p style="margin:16px 0 0; font-size:13px; color:#737373; line-height:1.5;">
       Show your QR code at the cafe to check in. You can find it on your booking details page.
     </p>
   `
