@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { cafes, users } from "@/lib/db/schema"
@@ -12,11 +12,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  // Verify user exists
-  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1)
-  if (!user[0]) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  // Fetch user from DB — if missing, auto-create from Clerk (webhook may not have fired yet)
+  let existing = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+  if (!existing[0]) {
+    const clerkUser = await currentUser()
+    if (!clerkUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const primaryEmail = clerkUser.emailAddresses.find(
+      (e) => e.id === clerkUser.primaryEmailAddressId
+    )?.emailAddress
+    if (!primaryEmail) {
+      return NextResponse.json({ error: "No primary email on account" }, { status: 400 })
+    }
+    const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || primaryEmail
+    await db.insert(users).values({
+      id: userId,
+      email: primaryEmail,
+      name,
+      avatarUrl: clerkUser.imageUrl || null,
+      role: "worker",
+    })
+    existing = await db.select().from(users).where(eq(users.id, userId)).limit(1)
   }
+
+  const user = existing
 
   const body = await req.json()
   const parsed = cafeDetailsSchema.safeParse(body)

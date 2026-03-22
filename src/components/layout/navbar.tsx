@@ -9,7 +9,6 @@ import { UserButton } from "@clerk/nextjs"
 import { cn } from "@/lib/utils/cn"
 
 const navLinks = [
-  { label: "Search", href: "/search" },
   { label: "For Cafes", href: "/onboarding" },
   { label: "About", href: "/#how-it-works" },
 ]

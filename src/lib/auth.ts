@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { users, type User } from "@/lib/db/schema"
@@ -12,11 +12,36 @@ export async function getCurrentUser(): Promise<User | null> {
     return null
   }
 
-  const result = await db.query.users.findFirst({
+  const existing = await db.query.users.findFirst({
     where: eq(users.id, userId),
   })
 
-  return result ?? null
+  if (existing) return existing
+
+  // User row missing — webhook may not have fired yet. Auto-create from Clerk.
+  const clerkUser = await currentUser()
+  if (!clerkUser) return null
+
+  const primaryEmail = clerkUser.emailAddresses.find(
+    (e) => e.id === clerkUser.primaryEmailAddressId
+  )?.emailAddress
+  if (!primaryEmail) return null
+
+  const name =
+    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || primaryEmail
+
+  await db
+    .insert(users)
+    .values({
+      id: userId,
+      email: primaryEmail,
+      name,
+      avatarUrl: clerkUser.imageUrl || null,
+      role: "worker",
+    })
+    .onConflictDoNothing()
+
+  return (await db.query.users.findFirst({ where: eq(users.id, userId) })) ?? null
 }
 
 export async function requireAuth(): Promise<User> {
