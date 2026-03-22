@@ -1,15 +1,17 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { MapPin, Calendar, Users, Search, X } from "lucide-react"
+import { MapPin, Calendar, Users, Search, X, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { AISearchBar } from "@/components/search/ai-search-bar"
 import { cn } from "@/lib/utils/cn"
 
 function SearchHeader() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [aiMode, setAiMode] = useState(false)
 
   const city = searchParams.get("city") ?? ""
   const date = searchParams.get("date") ?? ""
@@ -84,53 +86,68 @@ function SearchHeader() {
 
   return (
     <div className="space-y-3">
-      {/* Compact search bar */}
-      <form
-        onSubmit={handleSubmit}
-        className={cn(
-          "flex flex-col gap-2 rounded-xl border border-border bg-white p-2 shadow-sm sm:flex-row sm:items-center",
-          "dark:bg-perch-dark/80 dark:border-stone-800"
-        )}
-      >
-        <div className="relative flex-1">
-          <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="city"
-            type="text"
-            placeholder="City or area..."
-            defaultValue={city}
-            className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            aria-label="City or area"
-          />
-        </div>
-        <div className="relative flex-1">
-          <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="date"
-            type="date"
-            defaultValue={date}
-            className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground focus:outline-none"
-            aria-label="Date"
-          />
-        </div>
-        <div className="relative w-full sm:w-24">
-          <Users className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="people"
-            type="number"
-            min={1}
-            max={20}
-            placeholder="People"
-            defaultValue={people}
-            className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            aria-label="Number of people"
-          />
-        </div>
-        <Button type="submit" size="sm" className="shrink-0">
-          <Search className="size-4" />
-          <span className="sm:sr-only">Search</span>
-        </Button>
-      </form>
+      {aiMode ? (
+        <AISearchBar onClose={() => setAiMode(false)} variant="header" />
+      ) : (
+        <>
+          {/* Compact search bar */}
+          <form
+            onSubmit={handleSubmit}
+            className={cn(
+              "flex flex-col gap-2 rounded-xl border border-border bg-white p-2 shadow-sm sm:flex-row sm:items-center",
+              "dark:bg-perch-dark/80 dark:border-stone-800"
+            )}
+          >
+            <div className="relative flex-1">
+              <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                name="city"
+                type="text"
+                placeholder="City or area..."
+                defaultValue={city}
+                className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                aria-label="City or area"
+              />
+            </div>
+            <div className="relative flex-1">
+              <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                name="date"
+                type="date"
+                defaultValue={date}
+                className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground focus:outline-none"
+                aria-label="Date"
+              />
+            </div>
+            <div className="relative w-full sm:w-24">
+              <Users className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                name="people"
+                type="number"
+                min={1}
+                max={20}
+                placeholder="People"
+                defaultValue={people}
+                className="w-full rounded-lg bg-transparent py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                aria-label="Number of people"
+              />
+            </div>
+            <Button type="submit" size="sm" className="shrink-0">
+              <Search className="size-4" />
+              <span className="sm:sr-only">Search</span>
+            </Button>
+            <button
+              type="button"
+              onClick={() => setAiMode(true)}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-perch-primary-600 transition-colors hover:bg-perch-primary-50 dark:text-perch-primary-400 dark:hover:bg-perch-primary-950/50"
+              aria-label="Switch to AI search"
+            >
+              <Sparkles className="size-3.5" />
+              <span className="hidden sm:inline">AI Search</span>
+            </button>
+          </form>
+        </>
+      )}
 
       {/* Active filter badges */}
       {activeFilters.length > 0 && (

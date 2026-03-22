@@ -5,10 +5,33 @@ import { cafes, spaces } from "@/lib/db/schema"
 import {
   searchParamsSchema,
   parseAmenities,
+  type SearchParams,
 } from "@/lib/validators/search"
+import { parseSearchQuery } from "@/lib/ai/parse-search-query"
 
-// Haversine distance in km as a raw SQL fragment
-// Uses LEAST(1, ...) to clamp acos input and avoid NaN from floating-point rounding
+// ── Rate limiter (in-memory, per-IP, 10 AI searches/hour) ─────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const AI_RATE_LIMIT = 10
+const AI_RATE_WINDOW_MS = 60 * 60 * 1000 // 1 hour
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + AI_RATE_WINDOW_MS })
+    return true
+  }
+
+  if (entry.count >= AI_RATE_LIMIT) {
+    return false
+  }
+
+  entry.count++
+  return true
+}
+
+// ── Haversine distance ─────────────────────────────────────────────────────
 function haversineSQL(lat: number, lng: number) {
   return sql<number>`(
     6371 * acos(LEAST(1.0,
@@ -21,23 +44,11 @@ function haversineSQL(lat: number, lng: number) {
   )`
 }
 
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url)
-  const rawParams = Object.fromEntries(url.searchParams.entries())
-
-  const parsed = searchParamsSchema.safeParse(rawParams)
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid search parameters", details: parsed.error.flatten() },
-      { status: 400 }
-    )
-  }
-
-  const params = parsed.data
+// ── Shared search logic ────────────────────────────────────────────────────
+async function executeSearch(params: SearchParams) {
   const amenityList = parseAmenities(params.amenities)
   const offset = (params.page - 1) * params.limit
 
-  // Build WHERE conditions
   const conditions = [
     eq(cafes.isActive, true),
     eq(cafes.verificationStatus, "verified"),
@@ -54,7 +65,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (params.minPrice !== undefined) {
-    // Convert rupees to paise for comparison
     conditions.push(gte(spaces.pricePerHour, params.minPrice * 100))
   }
 
@@ -71,19 +81,15 @@ export async function GET(req: NextRequest) {
   }
 
   if (amenityList.length > 0) {
-    // Check that the space's amenities jsonb array contains all requested amenities
-    // The parameter is passed as a bound value, not interpolated
     conditions.push(sql`${spaces.amenities}::jsonb @> ${sql`${JSON.stringify(amenityList)}`}::jsonb`)
   }
 
-  // If lat/lng, filter within ~50km radius
   const hasLocation = params.lat !== undefined && params.lng !== undefined
   if (hasLocation) {
     const distExpr = haversineSQL(params.lat!, params.lng!)
     conditions.push(sql`${distExpr} < 50`)
   }
 
-  // Build ORDER BY
   let orderExpr
   switch (params.sortBy) {
     case "price_asc":
@@ -104,7 +110,6 @@ export async function GET(req: NextRequest) {
       break
   }
 
-  // Execute query — join cafes + spaces, group by cafe
   const results = await db
     .select({
       cafeId: cafes.id,
@@ -127,9 +132,7 @@ export async function GET(req: NextRequest) {
       noiseLevel: spaces.noiseLevel,
       photos: spaces.photos,
       ...(hasLocation
-        ? {
-            distance: haversineSQL(params.lat!, params.lng!),
-          }
+        ? { distance: haversineSQL(params.lat!, params.lng!) }
         : {}),
     })
     .from(cafes)
@@ -209,7 +212,6 @@ export async function GET(req: NextRequest) {
 
   const data = Array.from(cafeMap.values())
 
-  // Get total count for pagination
   const countResult = await db
     .select({ count: sql<number>`count(DISTINCT ${cafes.id})` })
     .from(cafes)
@@ -218,7 +220,7 @@ export async function GET(req: NextRequest) {
 
   const totalCafes = Number(countResult[0]?.count ?? 0)
 
-  return NextResponse.json({
+  return {
     cafes: data,
     pagination: {
       page: params.page,
@@ -226,5 +228,90 @@ export async function GET(req: NextRequest) {
       totalCafes,
       totalPages: Math.ceil(totalCafes / params.limit),
     },
+  }
+}
+
+// ── GET: traditional search with URL params ────────────────────────────────
+async function GET(req: NextRequest) {
+  const url = new URL(req.url)
+  const rawParams = Object.fromEntries(url.searchParams.entries())
+
+  const parsed = searchParamsSchema.safeParse(rawParams)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid search parameters", details: parsed.error.flatten() },
+      { status: 400 }
+    )
+  }
+
+  const result = await executeSearch(parsed.data)
+  return NextResponse.json(result)
+}
+
+// ── POST: AI-powered natural language search ───────────────────────────────
+async function POST(req: NextRequest) {
+  const body = await req.json() as { naturalQuery?: string; [key: string]: unknown }
+  const { naturalQuery, ...explicitFilters } = body
+
+  if (!naturalQuery || typeof naturalQuery !== "string") {
+    return NextResponse.json(
+      { error: "naturalQuery is required" },
+      { status: 400 }
+    )
+  }
+
+  // Rate limit by IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: "AI search rate limit exceeded. Try again later." },
+      { status: 429 }
+    )
+  }
+
+  // Parse natural language query with Claude
+  const aiFilters = await parseSearchQuery(naturalQuery)
+
+  // Build search params: AI-extracted filters, overridden by explicit filters
+  const mergedParams: Record<string, unknown> = {}
+
+  if (aiFilters) {
+    // Map AI filters to search params format
+    if (aiFilters.city) mergedParams.city = aiFilters.city
+    if (aiFilters.area) mergedParams.city = aiFilters.area // area maps to city search
+    if (aiFilters.date) mergedParams.date = aiFilters.date
+    if (aiFilters.startTime) mergedParams.startTime = aiFilters.startTime
+    if (aiFilters.duration) mergedParams.duration = aiFilters.duration
+    if (aiFilters.people) mergedParams.people = aiFilters.people
+    if (aiFilters.amenities && aiFilters.amenities.length > 0) {
+      mergedParams.amenities = aiFilters.amenities.join(",")
+    }
+    if (aiFilters.noiseLevel) mergedParams.noiseLevel = aiFilters.noiseLevel
+    if (aiFilters.maxPricePerHour) mergedParams.maxPrice = aiFilters.maxPricePerHour
+    if (aiFilters.sortBy) mergedParams.sortBy = aiFilters.sortBy
+  }
+
+  // Explicit filters override AI-extracted ones
+  for (const [key, value] of Object.entries(explicitFilters)) {
+    if (value !== undefined && value !== null && value !== "") {
+      mergedParams[key] = value
+    }
+  }
+
+  const parsed = searchParamsSchema.safeParse(mergedParams)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid search parameters", details: parsed.error.flatten() },
+      { status: 400 }
+    )
+  }
+
+  const result = await executeSearch(parsed.data)
+
+  return NextResponse.json({
+    ...result,
+    aiFilters: aiFilters ?? null,
   })
 }
+
+export { GET, POST }
