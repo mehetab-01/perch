@@ -31,16 +31,23 @@ export async function StatsBar({ userId }: { userId: string }) {
       {statConfig.map((stat) => (
         <div
           key={stat.key}
-          className="flex items-center gap-4 rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-stone-900"
+          className="relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.04] p-5 backdrop-blur-sm"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-perch-primary-50 dark:bg-perch-primary-950">
-            <stat.icon className="h-5 w-5 text-perch-primary-600 dark:text-perch-primary-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">
-              {stat.format(stats[stat.key])}
-            </p>
-            <p className="text-sm text-neutral-500">{stat.label}</p>
+          {/* Subtle amber top-left glow */}
+          <div
+            className="pointer-events-none absolute -left-6 -top-6 h-20 w-20 rounded-full bg-perch-primary-500"
+            style={{ filter: "blur(28px)", opacity: 0.14 }}
+          />
+          <div className="relative flex items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-perch-primary-500/20 bg-perch-primary-500/10">
+              <stat.icon className="h-5 w-5 text-perch-primary-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {stat.format(stats[stat.key])}
+              </p>
+              <p className="text-xs text-neutral-500 mt-0.5">{stat.label}</p>
+            </div>
           </div>
         </div>
       ))}
