@@ -225,7 +225,7 @@ function SearchFilters() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block lg:w-72 lg:shrink-0">
-        <div className="sticky top-20 rounded-xl border border-border bg-white p-5 dark:bg-perch-dark/80 dark:border-stone-800">
+        <div className="sticky top-[88px] rounded-xl border border-border bg-white p-5 dark:bg-perch-dark/80 dark:border-stone-800">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
               <SlidersHorizontal className="size-4" />

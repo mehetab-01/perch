@@ -16,6 +16,12 @@ const sidebarLinks = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Bookings", href: "/bookings", icon: CalendarDays },
   { label: "Search", href: "/search", icon: Search },
+]
+
+const bottomTabLinks = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Bookings", href: "/bookings", icon: CalendarDays },
+  { label: "Search", href: "/search", icon: Search },
   { label: "Profile", href: "/profile", icon: User },
 ]
 
@@ -87,14 +93,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             perch
           </Link>
           <h1 className="text-lg font-semibold text-foreground max-lg:sr-only">
-            {sidebarLinks.find((l) =>
+            {bottomTabLinks.find((l) =>
               l.href === "/dashboard"
                 ? pathname === "/dashboard"
                 : pathname.startsWith(l.href)
             )?.label ?? "Dashboard"}
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <NotificationBell />
+            <Link
+              href="/profile"
+              aria-label="Profile"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400",
+                pathname.startsWith("/profile")
+                  ? "bg-perch-primary-50 text-perch-primary-700 dark:bg-perch-primary-950 dark:text-perch-primary-400"
+                  : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-stone-800 dark:hover:text-neutral-200"
+              )}
+            >
+              <User className="h-5 w-5" />
+            </Link>
             <div className="lg:hidden">
               <UserButton
                 appearance={{
@@ -116,7 +135,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around py-2">
-          {sidebarLinks.map((link) => {
+          {bottomTabLinks.map((link) => {
             const isActive =
               link.href === "/dashboard"
                 ? pathname === "/dashboard"

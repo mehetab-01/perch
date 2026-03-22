@@ -3,6 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { useClerk } from "@clerk/nextjs"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -16,6 +18,7 @@ import {
   Repeat,
   Calendar,
   Shield,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { formatTime, formatDateMedium, formatPaise } from "@/lib/utils/format"
@@ -46,8 +49,8 @@ const statusColors: Record<string, string> = {
 
 const historyTabs = [
   { key: "all", label: "All" },
-  { key: "completed", label: "Completed" },
   { key: "upcoming", label: "Upcoming" },
+  { key: "completed", label: "Completed" },
   { key: "cancelled", label: "Cancelled" },
 ] as const
 
@@ -55,11 +58,21 @@ type TabKey = (typeof historyTabs)[number]["key"]
 
 export function ProfileClient({ user, bookings }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("all")
+  const [signingOut, setSigningOut] = useState(false)
+  const { signOut } = useClerk()
+  const router = useRouter()
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    await signOut()
+    router.push("/")
+  }
 
   const filteredBookings = bookings.filter((b) => {
     if (activeTab === "all") return true
     if (activeTab === "completed") return b.status === "completed"
-    if (activeTab === "upcoming") return b.status === "confirmed" || b.status === "pending" || b.status === "checked_in"
+    if (activeTab === "upcoming")
+      return b.status === "confirmed" || b.status === "pending" || b.status === "checked_in"
     if (activeTab === "cancelled") return b.status === "cancelled"
     return true
   })
@@ -97,18 +110,40 @@ export function ProfileClient({ user, bookings }: Props) {
 
           {/* Info */}
           <div className="flex-1 space-y-3">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{user.name}</h1>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-perch-primary-50 px-2.5 py-0.5 text-xs font-medium text-perch-primary-700 dark:bg-perch-primary-950 dark:text-perch-primary-400">
-                  <Shield className="h-3 w-3" />
-                  {user.role === "worker" ? "Professional" : user.role === "cafe_owner" ? "Cafe Owner" : "Admin"}
-                </span>
-                <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  <Calendar className="h-3 w-3" />
-                  Member since {memberSinceFormatted}
-                </span>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-bold text-foreground">{user.name}</h1>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-perch-primary-50 px-2.5 py-0.5 text-xs font-medium text-perch-primary-700 dark:bg-perch-primary-950 dark:text-perch-primary-400">
+                    <Shield className="h-3 w-3" />
+                    {user.role === "worker"
+                      ? "Professional"
+                      : user.role === "cafe_owner"
+                        ? "Cafe Owner"
+                        : "Admin"}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    <Calendar className="h-3 w-3" />
+                    Member since {memberSinceFormatted}
+                  </span>
+                </div>
               </div>
+
+              {/* Sign out button */}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors",
+                  "hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400",
+                  "disabled:cursor-not-allowed disabled:opacity-60"
+                )}
+              >
+                <LogOut className="h-4 w-4" />
+                {signingOut ? "Signing out…" : "Sign out"}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -213,7 +248,9 @@ export function ProfileClient({ user, bookings }: Props) {
                   {/* Date badge */}
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-perch-primary-50 dark:bg-perch-primary-950">
                     <span className="text-[10px] font-medium uppercase text-perch-primary-600 dark:text-perch-primary-400">
-                      {new Date(booking.date + "T00:00:00").toLocaleDateString("en-IN", { month: "short" })}
+                      {new Date(booking.date + "T00:00:00").toLocaleDateString("en-IN", {
+                        month: "short",
+                      })}
                     </span>
                     <span className="text-base font-bold text-perch-primary-700 dark:text-perch-primary-300">
                       {new Date(booking.date + "T00:00:00").getDate()}

@@ -1,24 +1,22 @@
-import { Suspense } from "react"
 import { auth, currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth"
 import { getBookingsByStatus } from "@/lib/queries/dashboard"
 import { ProfileClient } from "@/components/dashboard/profile-client"
-import type { BookingWithDetails } from "@/types/dashboard"
 
 export const metadata = {
   title: "Profile | Perch",
   description: "Your profile and booking history",
 }
 
-async function ProfileContent() {
+async function ProfilePage() {
   const { userId } = await auth()
   if (!userId) redirect("/sign-in")
 
-  const [dbUser, clerkUser, recentBookings] = await Promise.all([
+  const [dbUser, clerkUser, bookings] = await Promise.all([
     getCurrentUser(),
     currentUser(),
-    getBookingsByStatus(userId, ["completed", "confirmed", "pending", "cancelled"], 20),
+    getBookingsByStatus(userId, ["completed", "confirmed", "pending", "cancelled", "checked_in"], 20),
   ])
 
   if (!dbUser) redirect("/sign-in")
@@ -34,23 +32,8 @@ async function ProfileContent() {
         role: dbUser.role,
         memberSince: dbUser.createdAt,
       }}
-      bookings={recentBookings}
+      bookings={bookings}
     />
-  )
-}
-
-function ProfilePage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-6">
-          <div className="h-32 animate-pulse rounded-2xl border border-border bg-neutral-100 dark:bg-stone-800" />
-          <div className="h-64 animate-pulse rounded-2xl border border-border bg-neutral-100 dark:bg-stone-800" />
-        </div>
-      }
-    >
-      <ProfileContent />
-    </Suspense>
   )
 }
 
