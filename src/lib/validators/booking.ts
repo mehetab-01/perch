@@ -14,6 +14,9 @@ export const createBookingSchema = z.object({
   numAttendees: z.number().int().min(1).max(20),
   meetingTitle: z.string().max(200).optional(),
   agenda: z.string().max(1000).optional(),
+  isRecurring: z.boolean().optional(),
+  recurrencePattern: z.enum(["weekly", "biweekly"]).optional(),
+  recurrenceEndDate: z.string().regex(datePattern, "End date must be YYYY-MM-DD format").optional(),
 })
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>

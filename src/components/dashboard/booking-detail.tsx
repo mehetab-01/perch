@@ -17,6 +17,7 @@ import {
   Circle,
   ArrowLeft,
   AlertTriangle,
+  Repeat,
 } from "lucide-react"
 import { toDataURL } from "qrcode"
 import { cn } from "@/lib/utils/cn"
@@ -78,13 +79,13 @@ export function BookingDetail({
     }
   }, [showQr, booking.checkinToken])
 
-  async function handleCancel() {
+  async function handleCancel(cancelAll = false) {
     setCancelling(true)
     try {
       const res = await fetch(`/api/bookings/${booking.id}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: cancelReason }),
+        body: JSON.stringify({ reason: cancelReason, cancelAll }),
       })
       if (res.ok) {
         router.refresh()
@@ -137,15 +138,42 @@ export function BookingDetail({
             Booking #{booking.id.slice(0, 8)}
           </p>
         </div>
-        <span
-          className={cn(
-            "rounded-full px-3 py-1 text-sm font-medium",
-            statusColors[booking.status] ?? ""
+        <div className="flex items-center gap-2">
+          {booking.isRecurring && (
+            <span className="flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-400">
+              <Repeat className="size-3.5" />
+              Series
+            </span>
           )}
-        >
-          {booking.status.replace("_", " ")}
-        </span>
+          <span
+            className={cn(
+              "rounded-full px-3 py-1 text-sm font-medium",
+              statusColors[booking.status] ?? ""
+            )}
+          >
+            {booking.status.replace("_", " ")}
+          </span>
+        </div>
       </div>
+
+      {/* Recurring series info */}
+      {booking.isRecurring && booking.recurringGroupId && (
+        <div className="flex items-center gap-3 rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-900 dark:bg-purple-950/50">
+          <Repeat className="size-5 shrink-0 text-purple-500" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              This is part of a recurring series
+              {booking.recurrencePattern === "biweekly" ? " (every 2 weeks)" : " (weekly)"}
+            </p>
+          </div>
+          <Link
+            href={`/bookings?series=${booking.recurringGroupId}`}
+            className="shrink-0 text-sm font-medium text-purple-600 hover:underline dark:text-purple-400"
+          >
+            View all in series
+          </Link>
+        </div>
+      )}
 
       {/* Status timeline */}
       {!isCancelled && (
@@ -428,15 +456,26 @@ export function BookingDetail({
                 rows={2}
                 maxLength={500}
               />
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleCancel}
+                  onClick={() => handleCancel(false)}
                   disabled={cancelling}
                 >
-                  {cancelling ? "Cancelling..." : "Yes, cancel"}
+                  {cancelling ? "Cancelling..." : booking.isRecurring ? "Cancel this session" : "Yes, cancel"}
                 </Button>
+                {booking.isRecurring && booking.recurringGroupId && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancel(true)}
+                    disabled={cancelling}
+                    className="bg-red-700 hover:bg-red-800 dark:bg-red-800 dark:hover:bg-red-900"
+                  >
+                    {cancelling ? "Cancelling..." : "Cancel all remaining"}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"

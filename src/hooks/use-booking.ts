@@ -16,6 +16,9 @@ type BookingData = {
   numAttendees: number
   meetingTitle?: string
   agenda?: string
+  isRecurring?: boolean
+  recurrencePattern?: "weekly" | "biweekly"
+  recurrenceEndDate?: string
 }
 
 type PaymentStatus = "idle" | "creating" | "checkout" | "verifying" | "success" | "failed"

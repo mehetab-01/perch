@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, Clock, Users, ChevronUp, X, Loader2 } from "lucide-react"
@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/cn"
 import { useBooking } from "@/hooks/use-booking"
 import { PaymentSuccess } from "@/components/booking/payment-success"
+import { RecurringToggle } from "@/components/booking/recurring-toggle"
 import type { Space } from "@/lib/db/schema"
+import { generateRecurringDates } from "@/lib/recurring"
+import type { RecurrencePattern } from "@/lib/recurring"
 
 const PLATFORM_FEE_RATE = 0.05
 const GST_RATE = 0.18
@@ -43,6 +46,9 @@ function BookingWidget({
   const [duration, setDuration] = useState(1)
   const [people, setPeople] = useState(2)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [recurring, setRecurring] = useState(false)
+  const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern>("weekly")
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("")
 
   const router = useRouter()
   const { isLoading, error, bookingId, paymentStatus, createBooking, reset } =
@@ -51,6 +57,13 @@ function BookingWidget({
   const activeSpaces = spaces.filter((s) => s.isActive)
   const selectedSpace = activeSpaces.find((s) => s.id === selectedSpaceId)
 
+  // Session count for recurring bookings
+  const sessionCount = useMemo(() => {
+    if (!recurring || !date || !recurrenceEndDate) return 1
+    const dates = generateRecurringDates(date, recurrencePattern, recurrenceEndDate)
+    return Math.max(dates.length, 1)
+  }, [recurring, date, recurrencePattern, recurrenceEndDate])
+
   // Price calculation (all in paise)
   const pricing = (() => {
     if (!selectedSpace) return null
@@ -58,8 +71,9 @@ function BookingWidget({
     const platformFee = Math.round(base * PLATFORM_FEE_RATE)
     const subtotal = base + platformFee
     const gst = Math.round(subtotal * GST_RATE)
-    const total = subtotal + gst
-    return { base, platformFee, gst, total }
+    const perSession = subtotal + gst
+    const total = perSession * sessionCount
+    return { base, platformFee, gst, perSession, total, sessionCount }
   })()
 
   const endTime = calculateEndTime(startTime, duration)
@@ -83,6 +97,13 @@ function BookingWidget({
       endTime,
       durationHours: duration,
       numAttendees: people,
+      ...(recurring && recurrenceEndDate
+        ? {
+            isRecurring: true,
+            recurrencePattern,
+            recurrenceEndDate,
+          }
+        : {}),
     })
   }
 
@@ -280,6 +301,19 @@ function BookingWidget({
         )}
       </div>
 
+      {/* Recurring toggle */}
+      <RecurringToggle
+        enabled={recurring}
+        onToggle={setRecurring}
+        pattern={recurrencePattern}
+        onPatternChange={setRecurrencePattern}
+        endDate={recurrenceEndDate}
+        onEndDateChange={setRecurrenceEndDate}
+        startDate={date}
+        pricePerSession={pricing?.perSession ?? 0}
+        disabled={isLoading}
+      />
+
       {/* Price breakdown */}
       {pricing && (
         <div className="space-y-1.5 rounded-lg border border-border bg-muted/30 p-3 text-sm">
@@ -297,6 +331,17 @@ function BookingWidget({
             <span>GST (18%)</span>
             <span>₹{Math.round(pricing.gst / 100)}</span>
           </div>
+          {pricing.sessionCount > 1 && (
+            <>
+              <div className="flex justify-between border-t border-border pt-1.5 text-muted-foreground">
+                <span>Per session</span>
+                <span>₹{Math.round(pricing.perSession / 100)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>× {pricing.sessionCount} sessions</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-foreground">
             <span>Total</span>
             <span>₹{Math.round(pricing.total / 100)}</span>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   MapPin,
@@ -9,6 +10,7 @@ import {
   Users,
   ChevronRight,
   Loader2,
+  Repeat,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import { formatTime, formatDateMedium, formatPaise } from "@/lib/utils/format"
@@ -31,6 +33,8 @@ const statusColors: Record<string, string> = {
 }
 
 function BookingsPage() {
+  const searchParams = useSearchParams()
+  const seriesId = searchParams.get("series")
   const [activeTab, setActiveTab] = useState<TabKey>("upcoming")
   const [bookings, setBookings] = useState<BookingWithDetails[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,6 +46,7 @@ function BookingsPage() {
     const statuses = tabs.find((t) => t.key === tab)!.statuses
     const params = new URLSearchParams()
     statuses.forEach((s) => params.append("status", s))
+    if (seriesId) params.set("series", seriesId)
 
     try {
       const res = await fetch(`/api/bookings?${params.toString()}`)
@@ -56,7 +61,7 @@ function BookingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [seriesId])
 
   useEffect(() => {
     fetchBookings(activeTab)
@@ -171,6 +176,15 @@ function BookingsPage() {
                     <h3 className="truncate font-semibold text-foreground">
                       {booking.meetingTitle ?? booking.spaceName}
                     </h3>
+                    {booking.isRecurring && (
+                      <span
+                        className="flex shrink-0 items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-400"
+                        aria-label="Recurring booking"
+                      >
+                        <Repeat className="size-3" />
+                        Series
+                      </span>
+                    )}
                     <span
                       className={cn(
                         "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",

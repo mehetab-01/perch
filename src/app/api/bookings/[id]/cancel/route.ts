@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { eq, and } from "drizzle-orm"
+import { eq, and, gte, not, inArray } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { bookings, payments, cafes, spaces, users } from "@/lib/db/schema"
 import { razorpay } from "@/lib/razorpay"
@@ -44,6 +44,7 @@ export async function POST(
   const body = await req.json()
   const rawReason = typeof body.reason === "string" ? body.reason.trim() : null
   const reason = rawReason ? rawReason.slice(0, 500) : null
+  const cancelAll = body.cancelAll === true
 
   // Find the booking and verify ownership
   const [booking] = await db
@@ -57,6 +58,8 @@ export async function POST(
       razorpayPaymentId: bookings.razorpayPaymentId,
       cafeId: bookings.cafeId,
       spaceId: bookings.spaceId,
+      recurringGroupId: bookings.recurringGroupId,
+      isRecurring: bookings.isRecurring,
     })
     .from(bookings)
     .where(and(eq(bookings.id, id), eq(bookings.workerId, userId)))
@@ -121,6 +124,73 @@ export async function POST(
     })
     .where(eq(bookings.id, id))
 
+  // ── Cancel all remaining sessions in the recurring series ──
+
+  let cancelledSeriesCount = 0
+
+  if (cancelAll && booking.isRecurring && booking.recurringGroupId) {
+    const today = new Date().toISOString().split("T")[0]!
+
+    // Find all future, cancellable bookings in the same series (excluding the one just cancelled)
+    const seriesBookings = await db
+      .select({
+        id: bookings.id,
+        date: bookings.date,
+        startTime: bookings.startTime,
+        totalAmount: bookings.totalAmount,
+        razorpayPaymentId: bookings.razorpayPaymentId,
+        status: bookings.status,
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.recurringGroupId, booking.recurringGroupId),
+          eq(bookings.workerId, userId),
+          not(eq(bookings.id, id)),
+          gte(bookings.date, today),
+          not(inArray(bookings.status, ["cancelled", "completed", "checked_in"]))
+        )
+      )
+
+    for (const seriesBooking of seriesBookings) {
+      // Process per-session refund
+      if (seriesBooking.status === "confirmed" && seriesBooking.razorpayPaymentId) {
+        const pct = calculateRefundPercentage(seriesBooking.date, seriesBooking.startTime)
+        if (pct > 0) {
+          const refund = Math.round(seriesBooking.totalAmount * (pct / 100))
+          try {
+            await razorpay.payments.refund(seriesBooking.razorpayPaymentId, {
+              amount: refund,
+              notes: {
+                bookingId: seriesBooking.id,
+                reason: reason || "Series cancellation",
+                refundPercentage: String(pct),
+              },
+            })
+            await db
+              .update(payments)
+              .set({ paymentStatus: "refunded" })
+              .where(eq(payments.razorpayPaymentId, seriesBooking.razorpayPaymentId))
+          } catch (err) {
+            console.error(`Refund failed for series booking ${seriesBooking.id}:`, err)
+          }
+        }
+      }
+
+      await db
+        .update(bookings)
+        .set({
+          status: "cancelled",
+          cancelledAt: new Date(),
+          cancelReason: reason || "Series cancelled",
+          updatedAt: new Date(),
+        })
+        .where(eq(bookings.id, seriesBooking.id))
+
+      cancelledSeriesCount++
+    }
+  }
+
   // ── Notify cafe owner ──
 
   const [cafe, space] = await Promise.all([
@@ -164,5 +234,6 @@ export async function POST(
     success: true,
     refundPercentage,
     refundAmount,
+    ...(cancelledSeriesCount > 0 ? { cancelledSeriesCount } : {}),
   })
 }

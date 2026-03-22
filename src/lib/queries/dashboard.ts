@@ -22,6 +22,9 @@ const bookingWithDetailsSelect = {
   totalAmount: bookings.totalAmount,
   platformFee: bookings.platformFee,
   cafePayout: bookings.cafePayout,
+  isRecurring: bookings.isRecurring,
+  recurringGroupId: bookings.recurringGroupId,
+  recurrencePattern: bookings.recurrencePattern,
   cancelledAt: bookings.cancelledAt,
   cancelReason: bookings.cancelReason,
   createdAt: bookings.createdAt,
@@ -63,19 +66,24 @@ export async function getBookingsByStatus(
   userId: string,
   statuses: string[],
   limit = 20,
-  offset = 0
+  offset = 0,
+  seriesId?: string
 ): Promise<BookingWithDetails[]> {
+  const conditions = [
+    eq(bookings.workerId, userId),
+    inArray(bookings.status, statuses as ("pending" | "confirmed" | "checked_in" | "completed" | "cancelled")[]),
+  ]
+
+  if (seriesId) {
+    conditions.push(eq(bookings.recurringGroupId, seriesId))
+  }
+
   const result = await db
     .select(bookingWithDetailsSelect)
     .from(bookings)
     .innerJoin(cafes, eq(bookings.cafeId, cafes.id))
     .innerJoin(spaces, eq(bookings.spaceId, spaces.id))
-    .where(
-      and(
-        eq(bookings.workerId, userId),
-        inArray(bookings.status, statuses as ("pending" | "confirmed" | "checked_in" | "completed" | "cancelled")[])
-      )
-    )
+    .where(and(...conditions))
     .orderBy(desc(bookings.date), desc(bookings.startTime))
     .limit(limit)
     .offset(offset)

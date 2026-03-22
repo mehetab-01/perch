@@ -12,6 +12,9 @@ export type BookingWithDetails = {
   totalAmount: number // paise
   platformFee: number
   cafePayout: number
+  isRecurring: boolean
+  recurringGroupId: string | null
+  recurrencePattern: string | null
   cancelledAt: Date | null
   cancelReason: string | null
   createdAt: Date

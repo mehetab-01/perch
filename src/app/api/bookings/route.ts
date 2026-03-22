@@ -3,10 +3,11 @@ import { auth } from "@clerk/nextjs/server"
 import { eq, and, gte, lte, not, inArray } from "drizzle-orm"
 import crypto from "crypto"
 import { db } from "@/lib/db"
-import { bookings, payments, spaces, cafes } from "@/lib/db/schema"
+import { bookings, payments, spaces, cafes, availability } from "@/lib/db/schema"
 import { razorpay } from "@/lib/razorpay"
 import { createBookingSchema } from "@/lib/validators/booking"
 import { getBookingsByStatus } from "@/lib/queries/dashboard"
+import { generateRecurringDates } from "@/lib/recurring"
 
 // ── GET /api/bookings — list bookings by status ──
 
@@ -40,8 +41,9 @@ export async function GET(req: NextRequest) {
   const rawOffset = parseInt(searchParams.get("offset") ?? "0", 10)
   const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 20 : rawLimit, 1), 100)
   const offset = Math.max(Number.isNaN(rawOffset) ? 0 : rawOffset, 0)
+  const seriesId = searchParams.get("series")
 
-  const result = await getBookingsByStatus(userId, filtered, limit, offset)
+  const result = await getBookingsByStatus(userId, filtered, limit, offset, seriesId ?? undefined)
   return NextResponse.json(result)
 }
 
@@ -141,81 +143,157 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── Check for overlapping bookings ──
+  // ── Generate dates (single or recurring) ──
 
-  const overlapping = await db
-    .select({ id: bookings.id })
-    .from(bookings)
-    .where(
-      and(
-        eq(bookings.spaceId, data.spaceId),
-        eq(bookings.date, data.date),
-        not(inArray(bookings.status, ["cancelled"])),
-        // Time overlap: existing.start < new.end AND existing.end > new.start
-        lte(bookings.startTime, data.endTime),
-        gte(bookings.endTime, data.startTime)
-      )
+  const isRecurring =
+    data.isRecurring &&
+    data.recurrencePattern &&
+    data.recurrenceEndDate
+
+  let datesToBook: string[] = [data.date]
+
+  if (isRecurring) {
+    // Get blocked dates for this space
+    const blockedRows = await db
+      .select({ blockedDate: availability.blockedDate })
+      .from(availability)
+      .where(eq(availability.spaceId, data.spaceId))
+
+    const blockedDates = new Set(
+      blockedRows
+        .map((r) => r.blockedDate)
+        .filter((d): d is string => d !== null)
     )
-    .limit(1)
 
-  if (overlapping.length > 0) {
+    datesToBook = generateRecurringDates(
+      data.date,
+      data.recurrencePattern!,
+      data.recurrenceEndDate!,
+      blockedDates
+    )
+
+    if (datesToBook.length < 2) {
+      return NextResponse.json(
+        { error: "Recurring booking must have at least 2 sessions" },
+        { status: 400 }
+      )
+    }
+  }
+
+  // ── Check for overlapping bookings on ALL dates ──
+
+  const conflictingDates: string[] = []
+  for (const bookDate of datesToBook) {
+    const overlapping = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.spaceId, data.spaceId),
+          eq(bookings.date, bookDate),
+          not(inArray(bookings.status, ["cancelled"])),
+          lte(bookings.startTime, data.endTime),
+          gte(bookings.endTime, data.startTime)
+        )
+      )
+      .limit(1)
+
+    if (overlapping.length > 0) {
+      conflictingDates.push(bookDate)
+    }
+  }
+
+  if (conflictingDates.length > 0) {
     return NextResponse.json(
-      { error: "This time slot is already booked" },
+      {
+        error: isRecurring
+          ? `Time slot already booked on: ${conflictingDates.join(", ")}`
+          : "This time slot is already booked",
+        conflictingDates,
+      },
       { status: 409 }
     )
   }
 
-  // ── Calculate amounts (all in paise) ──
+  // ── Calculate amounts per session (all in paise) ──
 
   const spaceAmount = Math.round(space.pricePerHour * data.durationHours)
   const platformFee = Math.round(spaceAmount * PLATFORM_FEE_RATE)
   const gstAmount = Math.round((spaceAmount + platformFee) * GST_RATE)
-  const totalAmount = spaceAmount + platformFee + gstAmount
-  const cafePayout = spaceAmount - Math.round(spaceAmount * COMMISSION_RATE)
+  const perSessionTotal = spaceAmount + platformFee + gstAmount
+  const perSessionPayout = spaceAmount - Math.round(spaceAmount * COMMISSION_RATE)
 
-  // ── Create booking ──
+  const instanceCount = datesToBook.length
+  const grandTotal = perSessionTotal * instanceCount
+  const grandPlatformFee = platformFee * instanceCount
+  const grandGst = gstAmount * instanceCount
+  const grandPayout = perSessionPayout * instanceCount
 
-  const checkinToken = crypto.randomUUID()
+  // ── Create bookings ──
 
-  const [booking] = await db
-    .insert(bookings)
-    .values({
-      workerId: userId,
-      spaceId: data.spaceId,
-      cafeId: data.cafeId,
-      date: data.date,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      durationHours: data.durationHours,
-      numAttendees: data.numAttendees,
-      meetingTitle: data.meetingTitle ?? null,
-      agenda: data.agenda ?? null,
-      status: "pending",
-      checkinToken,
-      totalAmount,
-      platformFee,
-      cafePayout,
-    })
-    .returning({ id: bookings.id })
+  const recurringGroupId = isRecurring ? crypto.randomUUID() : null
 
-  // ── Create Razorpay order ──
+  const createdBookingIds: string[] = []
+
+  for (const bookDate of datesToBook) {
+    const checkinToken = crypto.randomUUID()
+
+    const [booking] = await db
+      .insert(bookings)
+      .values({
+        workerId: userId,
+        spaceId: data.spaceId,
+        cafeId: data.cafeId,
+        date: bookDate,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        durationHours: data.durationHours,
+        numAttendees: data.numAttendees,
+        meetingTitle: data.meetingTitle ?? null,
+        agenda: data.agenda ?? null,
+        status: "pending",
+        checkinToken,
+        totalAmount: perSessionTotal,
+        platformFee,
+        cafePayout: perSessionPayout,
+        isRecurring: !!isRecurring,
+        recurringGroupId,
+        recurrencePattern: isRecurring ? data.recurrencePattern! : null,
+        recurrenceEndDate: isRecurring ? data.recurrenceEndDate! : null,
+      })
+      .returning({ id: bookings.id })
+
+    createdBookingIds.push(booking.id)
+  }
+
+  // ── Create a single Razorpay order for the total amount ──
+
+  const primaryBookingId = createdBookingIds[0]!
 
   let order
   try {
     order = await razorpay.orders.create({
-      amount: totalAmount,
+      amount: grandTotal,
       currency: "INR",
-      receipt: booking.id,
+      receipt: primaryBookingId,
       notes: {
-        bookingId: booking.id,
+        bookingId: primaryBookingId,
         cafeId: data.cafeId,
         workerId: userId,
         spaceId: data.spaceId,
+        ...(isRecurring
+          ? {
+              recurringGroupId: recurringGroupId!,
+              instanceCount: String(instanceCount),
+            }
+          : {}),
       },
     })
   } catch (error) {
-    // Clean up the booking if Razorpay order creation fails
-    await db.delete(bookings).where(eq(bookings.id, booking.id))
+    // Clean up all created bookings on Razorpay failure
+    for (const id of createdBookingIds) {
+      await db.delete(bookings).where(eq(bookings.id, id))
+    }
     console.error("Razorpay order creation failed:", error)
     return NextResponse.json(
       { error: "Payment service unavailable. Please try again." },
@@ -223,32 +301,37 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── Update booking with Razorpay order ID ──
+  // ── Update all bookings with Razorpay order ID ──
 
-  await db
-    .update(bookings)
-    .set({ razorpayOrderId: order.id })
-    .where(eq(bookings.id, booking.id))
+  for (const id of createdBookingIds) {
+    await db
+      .update(bookings)
+      .set({ razorpayOrderId: order.id })
+      .where(eq(bookings.id, id))
+  }
 
-  // ── Create payment record ──
+  // ── Create payment record (one for the primary booking) ──
 
   await db.insert(payments).values({
-    bookingId: booking.id,
+    bookingId: primaryBookingId,
     razorpayOrderId: order.id,
-    amount: totalAmount,
-    platformFee,
-    cafeAmount: cafePayout,
-    gstAmount,
+    amount: grandTotal,
+    platformFee: grandPlatformFee,
+    cafeAmount: grandPayout,
+    gstAmount: grandGst,
     paymentStatus: "pending",
   })
 
   return NextResponse.json(
     {
-      bookingId: booking.id,
+      bookingId: primaryBookingId,
+      bookingIds: createdBookingIds,
       orderId: order.id,
-      amount: totalAmount,
+      amount: grandTotal,
       currency: "INR",
       keyId: process.env.RAZORPAY_KEY_ID!,
+      instanceCount,
+      ...(isRecurring ? { recurringGroupId } : {}),
     },
     { status: 201 }
   )

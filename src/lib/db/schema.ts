@@ -157,6 +157,10 @@ export const bookings = pgTable("bookings", {
   totalAmount: integer("total_amount").notNull(), // paise
   platformFee: integer("platform_fee").notNull(), // paise
   cafePayout: integer("cafe_payout").notNull(), // paise
+  isRecurring: boolean("is_recurring").notNull().default(false),
+  recurringGroupId: uuid("recurring_group_id"),
+  recurrencePattern: text("recurrence_pattern"), // "weekly" | "biweekly"
+  recurrenceEndDate: date("recurrence_end_date"),
   razorpayOrderId: text("razorpay_order_id"),
   razorpayPaymentId: text("razorpay_payment_id"),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
