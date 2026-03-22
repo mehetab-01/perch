@@ -94,6 +94,18 @@ export const cafes = pgTable("cafes", {
   reviewSummaryUpdatedAt: timestamp("review_summary_updated_at", {
     withTimezone: true,
   }),
+  pricingSuggestionsCache: jsonb("pricing_suggestions_cache").$type<{
+    suggestions: {
+      timeSlot: string
+      currentPrice: number
+      suggestedPrice: number
+      reason: string
+      expectedImpact: string
+      spaceId: string
+      spaceName: string
+    }[]
+    generatedAt: string
+  }>(),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

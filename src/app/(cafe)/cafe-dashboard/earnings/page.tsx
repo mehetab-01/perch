@@ -51,6 +51,7 @@ async function EarningsContent() {
 
   return (
     <CafeEarningsClient
+      cafeId={cafe.id}
       earningsStats={earningsStats}
       dailyEarnings={dailyEarnings}
       transactions={transactions}

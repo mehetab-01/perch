@@ -1,5 +1,23 @@
 // ─── Cafe Dashboard Types ────────────────────────────────────────────────────
 
+// ─── Pricing Suggestions ─────────────────────────────────────────────────────
+
+export type PricingSuggestionData = {
+  timeSlot: string
+  currentPrice: number // paise
+  suggestedPrice: number // paise
+  reason: string
+  expectedImpact: string
+  spaceId: string
+  spaceName: string
+}
+
+export type PricingSuggestionsResponse = {
+  suggestions: PricingSuggestionData[]
+  generatedAt: string
+  totalBookingsAnalyzed: number
+}
+
 export type CafeBookingWithDetails = {
   id: string
   date: string

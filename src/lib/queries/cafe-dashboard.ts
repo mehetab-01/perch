@@ -396,6 +396,92 @@ export async function getCafeTransactions(
     .offset(offset)
 }
 
+// ─── Pricing Analytics Queries ───────────────────────────────────────────────
+
+export type BookingAnalyticsRow = {
+  spaceId: string
+  spaceName: string
+  pricePerHour: number // paise
+  startTime: string
+  dayOfWeek: number // 0 = Sun, 6 = Sat
+  durationHours: number
+  cafePayout: number // paise
+}
+
+/** Fetch completed booking data for the last 90 days for pricing analysis */
+export async function getBookingAnalytics(
+  cafeId: string
+): Promise<{ rows: BookingAnalyticsRow[]; totalBookings: number }> {
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+  const cutoff = ninetyDaysAgo.toISOString().split("T")[0]!
+
+  const rows = await db
+    .select({
+      spaceId: bookings.spaceId,
+      spaceName: spaces.name,
+      pricePerHour: spaces.pricePerHour,
+      startTime: bookings.startTime,
+      dayOfWeek: sql<number>`extract(dow from ${bookings.date}::date)`,
+      durationHours: bookings.durationHours,
+      cafePayout: bookings.cafePayout,
+    })
+    .from(bookings)
+    .innerJoin(spaces, eq(bookings.spaceId, spaces.id))
+    .where(
+      and(
+        eq(bookings.cafeId, cafeId),
+        gte(bookings.date, cutoff),
+        inArray(bookings.status, ["confirmed", "checked_in", "completed"])
+      )
+    )
+    .orderBy(asc(bookings.date))
+
+  return { rows, totalBookings: rows.length }
+}
+
+/** Get the cached pricing suggestions from the cafes table */
+export async function getCachedPricingSuggestions(cafeId: string) {
+  const result = await db
+    .select({ cache: cafes.pricingSuggestionsCache })
+    .from(cafes)
+    .where(eq(cafes.id, cafeId))
+    .limit(1)
+
+  return result[0]?.cache ?? null
+}
+
+/** Count completed bookings in the last 90 days (lightweight query for cache hits) */
+export async function getBookingCount(cafeId: string): Promise<number> {
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+  const cutoff = ninetyDaysAgo.toISOString().split("T")[0]!
+
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.cafeId, cafeId),
+        gte(bookings.date, cutoff),
+        inArray(bookings.status, ["confirmed", "checked_in", "completed"])
+      )
+    )
+
+  return Number(result[0]!.count)
+}
+
+/** Save pricing suggestions to the cafes table cache */
+export async function savePricingSuggestionsCache(
+  cafeId: string,
+  cache: NonNullable<typeof cafes.$inferSelect.pricingSuggestionsCache>
+) {
+  await db
+    .update(cafes)
+    .set({ pricingSuggestionsCache: cache, updatedAt: new Date() })
+    .where(eq(cafes.id, cafeId))
+}
+
 // ─── Reviews Queries ─────────────────────────────────────────────────────────
 
 export async function getCafeReviews(

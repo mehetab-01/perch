@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils/cn"
 import { Card } from "@/components/ui/card"
 import { formatPaise, formatDateShort } from "@/lib/utils/format"
+import { PricingSuggestions } from "@/components/cafe/pricing-suggestions"
 import type {
   CafeEarningsStats,
   CafeEarningsDay,
@@ -16,6 +17,7 @@ import type {
 } from "@/types/cafe-dashboard"
 
 type EarningsProps = {
+  cafeId: string
   earningsStats: CafeEarningsStats
   dailyEarnings: CafeEarningsDay[]
   transactions: CafeTransaction[]
@@ -41,6 +43,7 @@ const payoutStatusStyles: Record<string, string> = {
 }
 
 function CafeEarningsClient({
+  cafeId,
   earningsStats,
   dailyEarnings,
   transactions,
@@ -173,6 +176,9 @@ function CafeEarningsClient({
           </div>
         </Card>
       </section>
+
+      {/* AI Pricing Insights */}
+      <PricingSuggestions cafeId={cafeId} />
 
       {/* Transactions */}
       <section>
