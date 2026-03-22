@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="96" fill="#1C1917"/>
+  <g transform="translate(256, 256)">
+    <!-- Stylized "P" letterform in amber -->
+    <path d="M-80 120 L-80 -100 Q-80 -140 -40 -140 L40 -140 Q120 -140 120 -60 Q120 20 40 20 L-30 20 L-30 120 Z" fill="#F59E0B"/>
+    <!-- Branch detail -->
+    <line x1="-30" y1="120" x2="100" y2="120" stroke="#F59E0B" stroke-width="16" stroke-linecap="round"/>
+    <!-- Small bird silhouette perched on the P -->
+    <path d="M60 -20 Q75 -50 90 -35 Q100 -25 85 -15 Q95 -5 80 0 Q65 5 60 -20Z" fill="#1C1917"/>
+  </g>
+</svg>

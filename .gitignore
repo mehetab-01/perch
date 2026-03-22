@@ -61,3 +61,8 @@ testsprite_tests/
 
 # Logs
 *.log
+
+# PWA (generated artifacts)
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
