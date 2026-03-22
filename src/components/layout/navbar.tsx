@@ -4,6 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
+import { UserButton } from "@clerk/nextjs"
 import { cn } from "@/lib/utils/cn"
 
 const navLinks = [
@@ -14,6 +16,7 @@ const navLinks = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { isSignedIn } = useAuth()
 
   return (
     <header
@@ -50,26 +53,46 @@ export function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/sign-in"
-            className={cn(
-              "rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors",
-              "hover:border-white/30 hover:bg-white/5",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
-            )}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className={cn(
-              "rounded-lg bg-perch-primary-500 px-4 py-2 text-sm font-semibold text-black transition-colors",
-              "hover:bg-perch-primary-400",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
-            )}
-          >
-            Get Started
-          </Link>
+          {isSignedIn ? (
+            <Link
+              href="/profile"
+              className={cn(
+                "flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors",
+                "hover:border-white/30 hover:bg-white/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
+              )}
+            >
+              <UserButton
+                appearance={{
+                  elements: { avatarBox: "h-6 w-6" },
+                }}
+              />
+              <span>Profile</span>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className={cn(
+                  "rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors",
+                  "hover:border-white/30 hover:bg-white/5",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
+                )}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className={cn(
+                  "rounded-lg bg-perch-primary-500 px-4 py-2 text-sm font-semibold text-black transition-colors",
+                  "hover:bg-perch-primary-400",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
+                )}
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -112,20 +135,37 @@ export function Navbar() {
 
               <div className="my-2 h-px bg-white/10" />
 
-              <Link
-                href="/sign-in"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:bg-white/5 hover:text-white"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileOpen(false)}
-                className="mt-1 rounded-lg bg-perch-primary-500 px-3 py-2.5 text-center text-sm font-semibold text-black transition-colors hover:bg-perch-primary-400"
-              >
-                Get Started
-              </Link>
+              {isSignedIn ? (
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <UserButton
+                    appearance={{
+                      elements: { avatarBox: "h-6 w-6" },
+                    }}
+                  />
+                  <span>Profile</span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/sign-up"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-1 rounded-lg bg-perch-primary-500 px-3 py-2.5 text-center text-sm font-semibold text-black transition-colors hover:bg-perch-primary-400"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}
