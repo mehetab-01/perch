@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils/cn"
 import { formatTime, formatDateLong, formatPaise } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
 import { ReviewPrompt } from "@/components/booking/review-prompt"
+import { AgendaGenerator } from "@/components/booking/agenda-generator"
+import { NotesGenerator } from "@/components/booking/notes-generator"
 import type { BookingWithDetails } from "@/types/dashboard"
 
 const statusSteps = [
@@ -57,6 +59,7 @@ export function BookingDetail({
   const [cancelling, setCancelling] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
+  const [savedAgenda, setSavedAgenda] = useState(booking.agenda)
 
   const isCancelled = booking.status === "cancelled"
   const isCompleted = booking.status === "completed"
@@ -89,6 +92,21 @@ export function BookingDetail({
     } finally {
       setCancelling(false)
       setShowCancelConfirm(false)
+    }
+  }
+
+  async function handleSaveAgenda(agenda: string) {
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agenda }),
+      })
+      if (res.ok) {
+        setSavedAgenda(agenda)
+      }
+    } catch {
+      // silently fail — the agenda is still visible in the UI
     }
   }
 
@@ -273,16 +291,27 @@ export function BookingDetail({
                 </dd>
               </div>
             </div>
-            {booking.agenda && (
+            {savedAgenda && (
               <div>
                 <dt className="text-sm text-neutral-500">Agenda</dt>
                 <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-foreground">
-                  {booking.agenda}
+                  {savedAgenda}
                 </dd>
               </div>
             )}
           </dl>
         </div>
+
+        {/* AI Agenda Generator — for non-cancelled bookings with a title */}
+        {!isCancelled && booking.meetingTitle && (
+          <AgendaGenerator
+            meetingTitle={booking.meetingTitle}
+            durationHours={booking.durationHours}
+            attendees={booking.numAttendees}
+            existingAgenda={savedAgenda}
+            onSave={handleSaveAgenda}
+          />
+        )}
 
         {/* Payment + QR */}
         <div className="space-y-6">
@@ -348,6 +377,15 @@ export function BookingDetail({
               bookingId={booking.id}
               cafeName={booking.cafeName}
               variant="card"
+            />
+          )}
+
+          {/* AI Notes Generator — for completed bookings with a title */}
+          {isCompleted && booking.meetingTitle && (
+            <NotesGenerator
+              meetingTitle={booking.meetingTitle}
+              durationHours={booking.durationHours}
+              existingAgenda={savedAgenda}
             />
           )}
         </div>
