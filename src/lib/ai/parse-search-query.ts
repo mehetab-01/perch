@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk"
 import { z } from "zod"
 import { buildSearchPrompt } from "@/lib/ai/search-prompt"
+import { callAI } from "@/lib/ai/providers"
 
 const aiSearchFiltersSchema = z.object({
   city: z.string().nullable().optional(),
@@ -28,24 +28,9 @@ async function parseSearchQuery(
   }
 
   try {
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    })
+    const rawJson = await callAI(trimmed, buildSearchPrompt(), 512)
+    if (!rawJson) return null
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 512,
-      system: buildSearchPrompt(),
-      messages: [{ role: "user", content: trimmed }],
-    })
-
-    // Extract text from response
-    const textBlock = response.content.find((block) => block.type === "text")
-    if (!textBlock || textBlock.type !== "text") {
-      return null
-    }
-
-    const rawJson = textBlock.text.trim()
     const parsed = JSON.parse(rawJson) as unknown
     const validated = aiSearchFiltersSchema.safeParse(parsed)
 
@@ -70,7 +55,6 @@ async function parseSearchQuery(
 
     return filters
   } catch {
-    // If Claude API fails, return null to fall back to regular search
     return null
   }
 }

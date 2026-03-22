@@ -134,6 +134,7 @@ async function CafePage({ params }: CafePageProps) {
         <CafeAmenities spaces={cafe.spaces} />
 
         <CafeReviews
+          cafeId={cafe.id}
           reviews={cafe.reviews}
           avgRating={cafe.avgRating}
           totalReviews={cafe.totalReviews}

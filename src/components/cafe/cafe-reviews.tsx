@@ -1,12 +1,83 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Star, Wifi, Volume2, Maximize, UserCheck, MessageSquare } from "lucide-react"
+import { Star, Wifi, Volume2, Maximize, UserCheck, MessageSquare, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/cn"
 import type { ReviewWithAuthor } from "@/types/cafe"
+
+/* ── AI Summary card ── */
+
+type ReviewSummaryData = {
+  summary: string | null
+  updatedAt: string | null
+  reviewCount: number
+}
+
+function ReviewSummaryCard({ cafeId }: { cafeId: string }) {
+  const [data, setData] = useState<ReviewSummaryData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const res = await fetch(`/api/cafes/${cafeId}/review-summary`)
+        if (!res.ok) {
+          setLoading(false)
+          return
+        }
+        const json = (await res.json()) as ReviewSummaryData
+        setData(json)
+      } catch {
+        // Silently fail — summary is a nice-to-have
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSummary()
+  }, [cafeId])
+
+  if (loading) {
+    return (
+      <div className="mb-6 animate-pulse rounded-xl border border-perch-primary-200/50 bg-gradient-to-br from-perch-primary-50/50 to-white p-5 dark:border-perch-primary-800/30 dark:from-perch-primary-950/20 dark:to-stone-900">
+        <div className="h-4 w-32 rounded bg-muted" />
+        <div className="mt-3 space-y-2">
+          <div className="h-3 w-full rounded bg-muted" />
+          <div className="h-3 w-4/5 rounded bg-muted" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!data?.summary) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className={cn(
+        "mb-6 rounded-xl border p-5",
+        "border-perch-primary-200/50 bg-gradient-to-br from-perch-primary-50/50 to-white",
+        "dark:border-perch-primary-800/30 dark:from-perch-primary-950/20 dark:to-stone-900"
+      )}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <Sparkles className="size-4 text-perch-primary-500" />
+        <span className="text-sm font-semibold text-foreground">AI Summary</span>
+      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {data.summary}
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground/60">
+        Based on {data.reviewCount} {data.reviewCount === 1 ? "review" : "reviews"}
+      </p>
+    </motion.div>
+  )
+}
 
 /* ── Rating bar ── */
 
@@ -164,12 +235,13 @@ function ReviewCard({ review, index }: ReviewCardProps) {
 const REVIEWS_PER_PAGE = 10
 
 type CafeReviewsProps = {
+  cafeId: string
   reviews: ReviewWithAuthor[]
   avgRating: number
   totalReviews: number
 }
 
-function CafeReviews({ reviews, avgRating, totalReviews }: CafeReviewsProps) {
+function CafeReviews({ cafeId, reviews, avgRating, totalReviews }: CafeReviewsProps) {
   const [showCount, setShowCount] = useState(REVIEWS_PER_PAGE)
 
   if (totalReviews === 0) {
@@ -206,6 +278,9 @@ function CafeReviews({ reviews, avgRating, totalReviews }: CafeReviewsProps) {
       <h2 className="mb-4 font-display text-xl font-semibold text-foreground">
         Reviews
       </h2>
+
+      {/* AI Summary */}
+      {totalReviews >= 3 && <ReviewSummaryCard cafeId={cafeId} />}
 
       {/* Overview */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">

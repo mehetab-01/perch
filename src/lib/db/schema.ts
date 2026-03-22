@@ -90,6 +90,10 @@ export const cafes = pgTable("cafes", {
     .default("pending"),
   avgRating: real("avg_rating").notNull().default(0),
   totalReviews: integer("total_reviews").notNull().default(0),
+  reviewSummary: text("review_summary"),
+  reviewSummaryUpdatedAt: timestamp("review_summary_updated_at", {
+    withTimezone: true,
+  }),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

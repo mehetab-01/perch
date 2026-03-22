@@ -102,6 +102,7 @@ export async function POST(req: Request) {
       .set({
         avgRating: Number(Number(stats.avg).toFixed(2)),
         totalReviews: Number(stats.count),
+        reviewSummaryUpdatedAt: null, // invalidate AI summary cache
         updatedAt: new Date(),
       })
       .where(eq(cafes.id, cafeId))
