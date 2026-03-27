@@ -1,11 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Calendar, Users, Search, ChevronDown, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { motion } from "framer-motion"
+import { ChevronDown, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
-import { AISearchBar } from "@/components/search/ai-search-bar"
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -13,9 +11,6 @@ const fadeUp = {
 }
 
 function Hero() {
-  const router = useRouter()
-  const [aiMode, setAiMode] = useState(false)
-
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 pt-16">
       {/* Animated gradient background */}
@@ -101,141 +96,38 @@ function Hero() {
           No calls. No walk-ins. No WeWork prices.
         </motion.p>
 
-        {/* Search bar */}
+        {/* CTA Buttons */}
         <motion.div
           variants={fadeUp}
           initial="initial"
           animate="animate"
           transition={{ duration: 0.7, delay: 0.45 }}
-          className="w-full max-w-3xl"
+          className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5"
         >
-          <AnimatePresence mode="wait">
-            {aiMode ? (
-              <motion.div
-                key="ai-search"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AISearchBar onClose={() => setAiMode(false)} variant="hero" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="manual-search"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <form
-                  role="search"
-                  aria-label="Search for cafe spaces"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    const form = e.currentTarget
-                    const location = (form.elements.namedItem("location") as HTMLInputElement).value.trim()
-                    const date = (form.elements.namedItem("date") as HTMLInputElement).value
-                    const people = (form.elements.namedItem("people") as HTMLInputElement).value
-                    const params = new URLSearchParams()
-                    if (location) params.set("city", location)
-                    if (date) params.set("date", date)
-                    if (people) params.set("people", people)
-                    router.push(`/search${params.size ? `?${params}` : ""}`)
-                  }}
-                  className={cn(
-                    "flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl",
-                    "sm:flex-row sm:items-center sm:gap-0 sm:rounded-full sm:p-2"
-                  )}
-                >
-                  {/* Location */}
-                  <div
-                    className={cn(
-                      "flex flex-1 items-center gap-2 rounded-xl px-4 py-3",
-                      "sm:rounded-full sm:transition-colors sm:hover:bg-white/5"
-                    )}
-                  >
-                    <MapPin className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
-                    <input
-                      name="location"
-                      type="text"
-                      placeholder="Mumbai, Bandra..."
-                      aria-label="Search location"
-                      className="min-w-0 w-full bg-transparent text-sm text-white placeholder-neutral-500 outline-none"
-                    />
-                  </div>
-
-                  {/* Divider */}
-                  <div className="hidden h-8 w-px bg-white/10 sm:block" aria-hidden="true" />
-
-                  {/* Date */}
-                  <div
-                    className={cn(
-                      "flex flex-1 items-center gap-2 rounded-xl px-4 py-3",
-                      "sm:rounded-full sm:transition-colors sm:hover:bg-white/5"
-                    )}
-                  >
-                    <Calendar className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
-                    <input
-                      name="date"
-                      type="date"
-                      aria-label="Select date"
-                      className="w-full bg-transparent text-sm text-white placeholder-neutral-500 outline-none [color-scheme:dark]"
-                    />
-                  </div>
-
-                  {/* Divider */}
-                  <div className="hidden h-8 w-px bg-white/10 sm:block" aria-hidden="true" />
-
-                  {/* People */}
-                  <div
-                    className={cn(
-                      "flex flex-1 items-center gap-2 rounded-xl px-4 py-3",
-                      "sm:rounded-full sm:transition-colors sm:hover:bg-white/5"
-                    )}
-                  >
-                    <Users className="h-4 w-4 shrink-0 text-perch-primary-400" aria-hidden="true" />
-                    <input
-                      name="people"
-                      type="number"
-                      min={1}
-                      max={20}
-                      placeholder="People (1-20)"
-                      aria-label="Number of people"
-                      className="w-full bg-transparent text-sm text-white placeholder-neutral-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                  </div>
-
-                  {/* Search button */}
-                  <button
-                    type="submit"
-                    aria-label="Find spaces"
-                    className={cn(
-                      "flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-perch-primary-400 to-perch-primary-500 px-6 py-3 text-sm font-semibold text-black",
-                      "transition-all hover:opacity-90 hover:shadow-lg hover:shadow-perch-primary-500/25",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                      "sm:rounded-full"
-                    )}
-                  >
-                    <Search className="h-4 w-4" aria-hidden="true" />
-                    Find spaces
-                  </button>
-                </form>
-
-                {/* AI Search toggle */}
-                <div className="mt-3 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setAiMode(true)}
-                    className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-perch-primary-400 backdrop-blur-sm transition-all hover:border-perch-primary-400/30 hover:bg-white/10"
-                  >
-                    <Sparkles className="size-3.5" />
-                    Try AI Search
-                  </button>
-                </div>
-              </motion.div>
+          <Link
+            href="/sign-up"
+            id="hero-get-started"
+            className={cn(
+              "group relative flex items-center gap-2.5 rounded-full bg-gradient-to-r from-perch-primary-400 to-perch-primary-500 px-8 py-3.5 text-base font-semibold text-black",
+              "transition-all duration-300 hover:shadow-xl hover:shadow-perch-primary-500/30 hover:scale-[1.03]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             )}
-          </AnimatePresence>
+          >
+            Get Started
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
+          </Link>
+
+          <Link
+            href="/sign-in"
+            id="hero-login"
+            className={cn(
+              "flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm",
+              "transition-all duration-300 hover:border-white/30 hover:bg-white/10 hover:scale-[1.03]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            )}
+          >
+            Login
+          </Link>
         </motion.div>
 
         {/* Social proof micro-text */}
@@ -268,3 +160,4 @@ function Hero() {
 }
 
 export { Hero }
+
