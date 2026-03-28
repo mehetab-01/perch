@@ -7,9 +7,7 @@ import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 
 const navLinks = [
-  { label: "Search", href: "/search" },
   { label: "For Cafes", href: "/onboarding" },
-  { label: "About", href: "/#how-it-works" },
 ]
 
 export function Navbar() {
@@ -46,30 +44,6 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-        </div>
-
-        {/* Desktop actions */}
-        <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/sign-in"
-            className={cn(
-              "rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-white transition-colors",
-              "hover:border-white/30 hover:bg-white/5",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
-            )}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className={cn(
-              "rounded-lg bg-perch-primary-500 px-4 py-2 text-sm font-semibold text-black transition-colors",
-              "hover:bg-perch-primary-400",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-perch-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-perch-dark"
-            )}
-          >
-            Get Started
-          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -109,23 +83,6 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-
-              <div className="my-2 h-px bg-white/10" />
-
-              <Link
-                href="/sign-in"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm text-neutral-300 transition-colors hover:bg-white/5 hover:text-white"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileOpen(false)}
-                className="mt-1 rounded-lg bg-perch-primary-500 px-3 py-2.5 text-center text-sm font-semibold text-black transition-colors hover:bg-perch-primary-400"
-              >
-                Get Started
-              </Link>
             </div>
           </motion.div>
         )}

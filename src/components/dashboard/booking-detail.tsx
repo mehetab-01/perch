@@ -440,6 +440,25 @@ export function BookingDetail({
         </div>
       </div>
 
+      {/* Cancellation policy */}
+      {canCancel && (
+        <div className="rounded-xl border border-white/8 bg-white/3 p-4 dark:border-stone-700">
+          <h2 className="mb-3 text-sm font-semibold text-neutral-400 uppercase tracking-wide">Cancellation Policy</h2>
+          <div className="space-y-2">
+            {[
+              { label: "24+ hrs before", value: "Full refund", color: "text-emerald-400" },
+              { label: "Within 24 hrs", value: "50% refund", color: "text-amber-400" },
+              { label: "No-show", value: "No refund", color: "text-red-400" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="flex items-center justify-between text-sm">
+                <span className="text-neutral-400">{label}</span>
+                <span className={`font-medium ${color}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Cancel booking */}
       {canCancel && !showCancelConfirm && (
         <div className="flex justify-end">

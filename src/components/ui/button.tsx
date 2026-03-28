@@ -40,7 +40,7 @@ type ButtonProps = HTMLMotionProps<"button"> &
   }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, disabled, ...props }, ref) => {
+  ({ className, variant, size, disabled, asChild: _asChild, ...props }, ref) => {
     return (
       <motion.button
         className={cn(buttonVariants({ variant, size, className }))}

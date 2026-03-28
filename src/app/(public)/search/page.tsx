@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container"
 import { SearchHeader } from "@/components/search/search-header"
 import { SearchFilters } from "@/components/search/search-filters"
 import { SearchResults } from "@/components/search/search-results"
+import { SearchPageNav } from "@/components/search/search-page-nav"
 
 export const metadata: Metadata = {
   title: "Search Meeting Spaces — Perch",
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
 
 function SearchPageFallback() {
   return (
-    <div className="py-8">
+    <div className="py-4">
+      <div className="mb-4 h-8 w-32 animate-pulse rounded-lg bg-muted" />
       <div className="mb-6 h-14 animate-pulse rounded-xl bg-muted" />
       <div className="flex gap-6">
         <div className="hidden lg:block lg:w-72">
@@ -27,10 +29,7 @@ function SearchPageFallback() {
         <div className="flex-1">
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-72 animate-pulse rounded-xl bg-muted"
-              />
+              <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
         </div>
@@ -42,15 +41,22 @@ function SearchPageFallback() {
 function SearchPage() {
   return (
     <main className="min-h-screen bg-perch-light dark:bg-stone-950">
-      <Container className="py-6">
-        <Suspense fallback={<SearchPageFallback />}>
-          <SearchHeader />
-          <div className="mt-6 flex gap-6">
-            <SearchFilters />
-            <SearchResults />
-          </div>
-        </Suspense>
-      </Container>
+      {/* Push content below fixed navbar (h-16 = 64px) */}
+      <div className="pt-16">
+        <Container className="py-6">
+          <Suspense fallback={<SearchPageFallback />}>
+            {/* Back to dashboard nav */}
+            <SearchPageNav />
+            <div className="mt-4">
+              <SearchHeader />
+            </div>
+            <div className="mt-6 flex gap-6">
+              <SearchFilters />
+              <SearchResults />
+            </div>
+          </Suspense>
+        </Container>
+      </div>
     </main>
   )
 }

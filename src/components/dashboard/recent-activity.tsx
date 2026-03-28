@@ -6,29 +6,34 @@ import {
   XCircle,
   Star,
   CalendarCheck,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 import type { ActivityItem } from "@/types/dashboard"
 
 const typeConfig: Record<
   ActivityItem["type"],
-  { icon: typeof CheckCircle2; color: string }
+  { icon: typeof CheckCircle2; iconClass: string; dotClass: string }
 > = {
   booking_completed: {
     icon: CheckCircle2,
-    color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950",
+    iconClass: "text-emerald-400",
+    dotClass: "bg-emerald-500/10 border border-emerald-500/20",
   },
   booking_cancelled: {
     icon: XCircle,
-    color: "text-red-500 bg-red-50 dark:bg-red-950",
+    iconClass: "text-red-400",
+    dotClass: "bg-red-500/10 border border-red-500/20",
   },
   booking_confirmed: {
     icon: CalendarCheck,
-    color: "text-blue-500 bg-blue-50 dark:bg-blue-950",
+    iconClass: "text-blue-400",
+    dotClass: "bg-blue-500/10 border border-blue-500/20",
   },
   review_left: {
     icon: Star,
-    color: "text-amber-500 bg-amber-50 dark:bg-amber-950",
+    iconClass: "text-perch-primary-400",
+    dotClass: "bg-perch-primary-500/10 border border-perch-primary-500/20",
   },
 }
 
@@ -49,18 +54,21 @@ function timeAgo(date: Date): string {
 export function RecentActivity({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-white p-8 text-center dark:bg-stone-900">
-        <p className="text-neutral-600 dark:text-neutral-400">No recent activity yet</p>
-        <p className="mt-1 text-sm text-neutral-500">
-          Activity will appear here as you book and review spaces.
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-white/8 bg-white/[0.03] px-6 py-12 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+          <Activity className="h-5 w-5 text-neutral-500" />
+        </div>
+        <p className="text-sm font-medium text-neutral-400">No activity yet</p>
+        <p className="mt-1 text-xs text-neutral-600">
+          Your bookings and reviews will appear here
         </p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border bg-white dark:bg-stone-900">
-      <ul className="divide-y divide-border">
+    <div className="rounded-2xl border border-white/8 bg-white/[0.04] overflow-hidden">
+      <ul className="divide-y divide-white/6">
         {items.map((item, i) => {
           const config = typeConfig[item.type]
           const Icon = config.icon
@@ -68,25 +76,20 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
           return (
             <motion.li
               key={item.id}
-              initial={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
+              transition={{ delay: i * 0.06, duration: 0.25 }}
               className="flex items-center gap-3 px-4 py-3"
             >
-              <div
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                  config.color
-                )}
-              >
-                <Icon className="h-4 w-4" />
+              <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", config.dotClass)}>
+                <Icon className={cn("h-3.5 w-3.5", config.iconClass)} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">
+                <p className="truncate text-xs text-neutral-300">
                   {item.description}
                 </p>
               </div>
-              <span className="shrink-0 text-xs text-neutral-400">
+              <span className="shrink-0 text-[10px] text-neutral-600">
                 {timeAgo(item.timestamp)}
               </span>
             </motion.li>
