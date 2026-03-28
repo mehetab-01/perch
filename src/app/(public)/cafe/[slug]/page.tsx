@@ -10,6 +10,8 @@ import { CafeAmenities } from "@/components/cafe/cafe-amenities"
 import { CafeLocation } from "@/components/cafe/cafe-location"
 import { CafeReviews } from "@/components/cafe/cafe-reviews"
 import { CafePageClient } from "@/components/cafe/cafe-page-client"
+import { MockCafePage } from "@/app/(public)/cafe/[slug]/mock-page"
+import { MOCK_CAFES } from "@/lib/mock/cafes"
 import type { CafeWithDetails } from "@/types/cafe"
 
 type CafePageProps = {
@@ -113,6 +115,13 @@ export async function generateMetadata({
 
 async function CafePage({ params }: CafePageProps) {
   const { slug } = await params
+
+  // Check mock cafes first (for demo/search results)
+  const mockCafe = MOCK_CAFES.find((c) => c.slug === slug)
+  if (mockCafe) {
+    return <MockCafePage cafe={mockCafe} />
+  }
+
   const cafe = await getCafe(slug)
 
   if (!cafe) {
