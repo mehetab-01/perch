@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Store, FileCheck, Layers, Calendar, ClipboardCheck } from "lucide-react"
 import { Container } from "@/components/ui/container"
@@ -23,10 +24,30 @@ const STEPS = [
   { label: "Review", icon: ClipboardCheck },
 ]
 
+const STEP_NAMES = ["details", "documents", "spaces", "availability", "review"] as const
+
 function OnboardingPage() {
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState(1) // 1 = forward, -1 = backward
   const [state, setState] = useState<OnboardingState>(initialOnboardingState)
+
+  // Respect ?step= and ?cafeId= query params (used by spaces dashboard "Add space" / "Edit" buttons)
+  useEffect(() => {
+    const stepParam = searchParams.get("step")
+    const cafeIdParam = searchParams.get("cafeId")
+
+    if (stepParam) {
+      const idx = STEP_NAMES.indexOf(stepParam as typeof STEP_NAMES[number])
+      if (idx !== -1) {
+        setCurrentStep(idx)
+      }
+    }
+
+    if (cafeIdParam) {
+      setState((prev) => ({ ...prev, cafeId: cafeIdParam }))
+    }
+  }, [searchParams])
 
   const goToStep = useCallback(
     (step: number) => {

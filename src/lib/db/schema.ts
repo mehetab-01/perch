@@ -83,6 +83,7 @@ export const cafes = pgTable("cafes", {
   city: text("city").notNull().default("Mumbai"),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
+  coverPhotoUrl: text("cover_photo_url"),
   gstNumber: text("gst_number"),
   fssaiLicenseUrl: text("fssai_license_url"),
   verificationStatus: verificationStatusEnum("verification_status")

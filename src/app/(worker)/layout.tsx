@@ -1,11 +1,14 @@
+import { Suspense } from "react"
 import { DashboardShell } from "@/components/layout/dashboard-shell"
 import { PageTransition } from "@/components/layout/page-transition"
 
 function WorkerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardShell>
-      <PageTransition>{children}</PageTransition>
-    </DashboardShell>
+    <Suspense>
+      <DashboardShell>
+        <PageTransition>{children}</PageTransition>
+      </DashboardShell>
+    </Suspense>
   )
 }
 
