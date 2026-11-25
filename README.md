@@ -36,4 +36,5 @@ app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 
 
-My AWS code : NXN2DMCheck out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+My AWS code : NXN2DM
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
